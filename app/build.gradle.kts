@@ -75,4 +75,8 @@ dependencies {
     // Ktor Android Client
     implementation("io.ktor:ktor-client-android:3.0.3")
     debugImplementation(libs.androidx.ui.tooling)
+
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
 }
