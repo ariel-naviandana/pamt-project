@@ -9,7 +9,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun DashboardScreen(
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onNavigateToKas: () -> Unit
 ) {
     /*
      * Dashboard sederhana yang muncul setelah user berhasil login.
@@ -37,8 +38,22 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Tombol untuk pindah ke halaman Kas
         Button(
-            onClick = onLogoutClick
+            onClick = onNavigateToKas,
+            modifier = Modifier.fillMaxWidth(0.6f)
+        ) {
+            Text("Kelola Kas")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onLogoutClick,
+            modifier = Modifier.fillMaxWidth(0.6f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
+            )
         ) {
             Text("Logout")
         }

@@ -20,4 +20,9 @@ sealed class Screen(val route: String) {
      * Route untuk halaman dashboard.
      */
     object Dashboard : Screen("dashboard")
+
+    /*
+     * Route untuk halaman kas.
+     */
+    object Kas : Screen("kas")
 }

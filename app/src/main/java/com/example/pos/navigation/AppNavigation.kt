@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -13,9 +14,11 @@ import androidx.navigation.compose.*
 import com.example.pos.ui.DashboardScreen
 import com.example.pos.ui.LoginScreen
 import com.example.pos.ui.RegisterScreen
+import com.example.pos.ui.KasScreen
 import com.example.pos.viewmodel.AuthUiState
 import com.example.pos.viewmodel.AuthViewModel
 import com.example.pos.viewmodel.AuthCheckState
+import com.example.pos.viewmodel.KasViewModel
 
 @Composable
 fun AppNavigation(
@@ -65,6 +68,8 @@ fun MainNavHost(
     val password = authViewModel.password.collectAsStateWithLifecycle()
     val uiState = authViewModel.uiState.collectAsStateWithLifecycle()
 
+    // Ambil profile untuk cek role
+    val userProfile by authViewModel.userProfile.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.value) {
         if (uiState.value is AuthUiState.Success) {
@@ -124,7 +129,27 @@ fun MainNavHost(
                             inclusive = true
                         }
                     }
+                },
+                onNavigateToKas = {
+                    navController.navigate(Screen.Kas.route)
                 }
+            )
+        }
+
+        composable(Screen.Kas.route) {
+            val kasViewModel: KasViewModel = viewModel()
+            val userProfile by authViewModel.userProfile.collectAsStateWithLifecycle()
+            val role = userProfile?.role ?: "cashier"
+
+            // Trigger fetch data berdasarkan role saat layar dibuka
+            LaunchedEffect(role) {
+                kasViewModel.fetchKas(role)
+            }
+
+            KasScreen(
+                viewModel = kasViewModel,
+                userRole = role,
+                onBackClick = { navController.popBackStack() }
             )
         }
     }
