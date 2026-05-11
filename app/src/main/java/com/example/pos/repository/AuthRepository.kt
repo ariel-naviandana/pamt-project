@@ -1,9 +1,10 @@
 package com.example.pos.repository
 
+import com.example.pos.model.Profile
+import io.github.jan.supabase.postgrest.from
 import com.example.pos.data.SupabaseClientProvider
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
-
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -68,5 +69,18 @@ class AuthRepository {
      */
     suspend fun awaitAuthInitialization() {
         supabase.auth.awaitInitialization()
+    }
+
+    // Fungsi untuk mengambil profil
+    suspend fun getUserProfile(): Profile? {
+        val user = supabase.auth.currentUserOrNull() ?: return null
+
+        return supabase.from("profiles")
+            .select {
+                filter {
+                    eq("id", user.id)
+                }
+            }
+            .decodeSingleOrNull<Profile>()
     }
 }
