@@ -2,6 +2,7 @@ package com.example.pos.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pos.model.Profile
 import com.example.pos.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -45,6 +46,10 @@ class AuthViewModel : ViewModel() {
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password
 
+    // State baru untuk menyimpan profil user (role)
+    private val _userProfile = MutableStateFlow<Profile?>(null)
+    val userProfile: StateFlow<Profile?> = _userProfile
+
     init {
         observeAuthStatus()
     }
@@ -56,15 +61,27 @@ class AuthViewModel : ViewModel() {
     private fun observeAuthStatus() {
         viewModelScope.launch {
             repository.sessionStatus.collect { status ->
-                _authCheckState.value = when (status) {
-                    is SessionStatus.Authenticated -> AuthCheckState.Authenticated
-                    is SessionStatus.NotAuthenticated -> AuthCheckState.NotAuthenticated
-                    is SessionStatus.Initializing -> AuthCheckState.Checking
+                when (status) {
+                    is SessionStatus.Authenticated -> {
+                        // Jika sudah login dari awal, ambil profilnya
+                        _userProfile.value = repository.getUserProfile()
+                        _authCheckState.value = AuthCheckState.Authenticated
+                    }
+                    is SessionStatus.NotAuthenticated -> {
+                        _userProfile.value = null
+                        _authCheckState.value = AuthCheckState.NotAuthenticated
+                    }
+                    is SessionStatus.Initializing -> {
+                        _authCheckState.value = AuthCheckState.Checking
+                    }
                     is SessionStatus.RefreshFailure -> {
-                        // Jika refresh gagal (misal koneksi internet), tetap cek session yang ada
-                        // atau anggap tidak terautentikasi jika session expired.
-                        if (repository.isLoggedIn()) AuthCheckState.Authenticated
-                        else AuthCheckState.NotAuthenticated
+                        if (repository.isLoggedIn()) {
+                            _userProfile.value = repository.getUserProfile()
+                            _authCheckState.value = AuthCheckState.Authenticated
+                        } else {
+                            _userProfile.value = null
+                            _authCheckState.value = AuthCheckState.NotAuthenticated
+                        }
                     }
                 }
             }
@@ -105,9 +122,8 @@ class AuthViewModel : ViewModel() {
                     password = _password.value
                 )
 
-                /*
-                 * Jika berhasil, ubah state menjadi Success.
-                 */
+                // Setelah berhasil login, ambil profilnya
+                _userProfile.value = repository.getUserProfile()
                 _uiState.value = AuthUiState.Success
 
             } catch (e: Exception) {
@@ -151,10 +167,7 @@ class AuthViewModel : ViewModel() {
     fun logout() {
         viewModelScope.launch {
             repository.logout()
-
-            /*
-             * Setelah logout, state dikembalikan ke Idle.
-             */
+            _userProfile.value = null // Hapus data profil saat logout
             _uiState.value = AuthUiState.Idle
         }
     }
