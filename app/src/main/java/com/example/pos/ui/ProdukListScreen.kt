@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,14 +35,15 @@ fun ProdukListScreen(
     LaunchedEffect(Unit) { vm.loadProduk() }
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Manajemen Produk") })
-        },
+        containerColor = MaterialTheme.colorScheme.surface,
         floatingActionButton = {
             // FAB hanya muncul untuk admin
             if (isAdmin) {
                 FloatingActionButton(
-                    onClick = { navController.navigate(Screen.ProdukForm.createRoute()) }
+                    onClick = { navController.navigate(Screen.ProdukForm.createRoute()) },
+                    modifier = Modifier.offset(y = 16.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Tambah Produk")
                 }
@@ -50,7 +52,6 @@ fun ProdukListScreen(
     ) { padding ->
         Box(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
         ) {
             when {
@@ -84,8 +85,13 @@ fun ProdukListScreen(
 
                 else -> {
                     LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        contentPadding = PaddingValues(
+                            start = 20.dp,
+                            end = 20.dp,
+                            top = 4.dp,
+                            bottom = 120.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(
                             items = listState.produkList,
