@@ -25,6 +25,7 @@ import com.example.pos.viewmodel.AuthCheckState
 import com.example.pos.viewmodel.AuthUiState
 import com.example.pos.viewmodel.AuthViewModel
 import com.example.pos.ui.KasScreen
+import com.example.pos.ui.MainScreen
 import com.example.pos.viewmodel.KasViewModel
 
 @Composable
@@ -46,7 +47,7 @@ fun AppNavigation(
         is AuthCheckState.Authenticated -> {
             MainNavHost(
                 authViewModel = authViewModel,
-                startDestination = Screen.Dashboard.route
+                startDestination = Screen.Main.route
             )
         }
 
@@ -75,7 +76,7 @@ fun MainNavHost(
 
     LaunchedEffect(uiState.value) {
         if (uiState.value is AuthUiState.Success) {
-            navController.navigate(Screen.Dashboard.route) {
+            navController.navigate(Screen.Main.route) {
                 popUpTo(Screen.Login.route) { inclusive = true }
             }
             authViewModel.resetState()
@@ -111,19 +112,16 @@ fun MainNavHost(
             )
         }
 
-        composable(Screen.Dashboard.route) {
-            DashboardScreen(
+        composable(Screen.Main.route) {
+
+            MainScreen(
+                userProfile = userProfile,
                 onLogoutClick = {
                     authViewModel.logout()
+
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Dashboard.route) { inclusive = true }
+                        popUpTo(0)
                     }
-                },
-                onNavigateToProduk = {
-                    navController.navigate(Screen.ProdukList.route)
-                },
-                onNavigateToKas = {
-                    navController.navigate(Screen.Kas.route)
                 }
             )
         }
