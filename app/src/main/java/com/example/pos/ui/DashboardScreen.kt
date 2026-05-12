@@ -23,12 +23,16 @@ fun DashboardScreen(
     ) {
         Text(
             text = "Dashboard",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text(text = "Anda berhasil login ke aplikasi.")
+        Text(
+            text = "Anda berhasil login ke aplikasi.",
+            color = MaterialTheme.colorScheme.onBackground
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
