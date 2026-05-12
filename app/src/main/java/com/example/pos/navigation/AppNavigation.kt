@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -23,6 +24,8 @@ import com.example.pos.ui.RegisterScreen
 import com.example.pos.viewmodel.AuthCheckState
 import com.example.pos.viewmodel.AuthUiState
 import com.example.pos.viewmodel.AuthViewModel
+import com.example.pos.ui.KasScreen
+import com.example.pos.viewmodel.KasViewModel
 
 @Composable
 fun AppNavigation(
@@ -62,6 +65,9 @@ fun MainNavHost(
     startDestination: String
 ) {
     val navController = rememberNavController()
+
+    // Ambil profile untuk mendapatkan role user
+    val userProfile by authViewModel.userProfile.collectAsStateWithLifecycle()
 
     val email = authViewModel.email.collectAsStateWithLifecycle()
     val password = authViewModel.password.collectAsStateWithLifecycle()
@@ -156,6 +162,23 @@ fun MainNavHost(
             ProdukDetailScreen(
                 navController = navController,
                 produkId = id
+            )
+        }
+
+        // ── Kas ────────────────────────────────────────────────────────────
+        composable(Screen.Kas.route) {
+            val kasViewModel: KasViewModel = viewModel()
+            val role = userProfile?.role ?: "cashier"
+
+            // Trigger fetch data saat layar dibuka
+            LaunchedEffect(role) {
+                kasViewModel.fetchKas(role)
+            }
+
+            KasScreen(
+                viewModel = kasViewModel,
+                userRole = role,
+                onBackClick = { navController.popBackStack() }
             )
         }
     }
