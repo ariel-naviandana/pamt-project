@@ -9,11 +9,9 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun DashboardScreen(
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onNavigateToProduk: () -> Unit  // Tambah parameter ini
 ) {
-    /*
-     * Dashboard sederhana yang muncul setelah user berhasil login.
-     */
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -21,24 +19,37 @@ fun DashboardScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-
         Text(
             text = "Dashboard",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
+            style = MaterialTheme.typography.headlineMedium
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            text = "Anda berhasil login ke aplikasi.",
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        Text(text = "Anda berhasil login ke aplikasi.")
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
+        // ── Menu Modul ────────────────────────────────────────────────────
         Button(
-            onClick = onLogoutClick
+            onClick = onNavigateToProduk,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Manajemen Produk")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Nanti anggota lain tambah tombol modul mereka di sini
+        // Button(onClick = onNavigateToKas) { Text("Manajemen Kas") }
+        // Button(onClick = onNavigateToPelanggan) { Text("Manajemen Pelanggan") }
+        // Button(onClick = onNavigateToPengeluaran) { Text("Pengeluaran") }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        OutlinedButton(
+            onClick = onLogoutClick,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text("Logout")
         }

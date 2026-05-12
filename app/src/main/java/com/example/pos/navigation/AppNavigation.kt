@@ -9,13 +9,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.*
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.pos.ui.DashboardScreen
 import com.example.pos.ui.LoginScreen
+import com.example.pos.ui.ProdukDetailScreen
+import com.example.pos.ui.ProdukFormScreen
+import com.example.pos.ui.ProdukListScreen
 import com.example.pos.ui.RegisterScreen
+import com.example.pos.viewmodel.AuthCheckState
 import com.example.pos.viewmodel.AuthUiState
 import com.example.pos.viewmodel.AuthViewModel
-import com.example.pos.viewmodel.AuthCheckState
 
 @Composable
 fun AppNavigation(
@@ -23,10 +30,6 @@ fun AppNavigation(
 ) {
     val authCheckState = authViewModel.authCheckState.collectAsStateWithLifecycle()
 
-    /*
-     * Saat aplikasi baru dibuka, cek dulu apakah user masih login.
-     * Jangan langsung tampilkan LoginScreen.
-     */
     when (authCheckState.value) {
         is AuthCheckState.Checking -> {
             Box(
@@ -53,7 +56,6 @@ fun AppNavigation(
     }
 }
 
-
 @Composable
 fun MainNavHost(
     authViewModel: AuthViewModel,
@@ -65,15 +67,11 @@ fun MainNavHost(
     val password = authViewModel.password.collectAsStateWithLifecycle()
     val uiState = authViewModel.uiState.collectAsStateWithLifecycle()
 
-
     LaunchedEffect(uiState.value) {
         if (uiState.value is AuthUiState.Success) {
             navController.navigate(Screen.Dashboard.route) {
-                popUpTo(Screen.Login.route) {
-                    inclusive = true
-                }
+                popUpTo(Screen.Login.route) { inclusive = true }
             }
-
             authViewModel.resetState()
         }
     }
@@ -82,6 +80,7 @@ fun MainNavHost(
         navController = navController,
         startDestination = startDestination
     ) {
+        // ── Auth ──────────────────────────────────────────────────────────
         composable(Screen.Login.route) {
             LoginScreen(
                 email = email.value,
@@ -89,12 +88,8 @@ fun MainNavHost(
                 uiState = uiState.value,
                 onEmailChange = authViewModel::onEmailChange,
                 onPasswordChange = authViewModel::onPasswordChange,
-                onLoginClick = {
-                    authViewModel.login()
-                },
-                onNavigateToRegister = {
-                    navController.navigate(Screen.Register.route)
-                }
+                onLoginClick = { authViewModel.login() },
+                onNavigateToRegister = { navController.navigate(Screen.Register.route) }
             )
         }
 
@@ -105,12 +100,8 @@ fun MainNavHost(
                 uiState = uiState.value,
                 onEmailChange = authViewModel::onEmailChange,
                 onPasswordChange = authViewModel::onPasswordChange,
-                onRegisterClick = {
-                    authViewModel.register()
-                },
-                onNavigateToLogin = {
-                    navController.popBackStack()
-                }
+                onRegisterClick = { authViewModel.register() },
+                onNavigateToLogin = { navController.popBackStack() }
             )
         }
 
@@ -118,13 +109,50 @@ fun MainNavHost(
             DashboardScreen(
                 onLogoutClick = {
                     authViewModel.logout()
-
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Dashboard.route) {
-                            inclusive = true
-                        }
+                        popUpTo(Screen.Dashboard.route) { inclusive = true }
                     }
+                },
+                onNavigateToProduk = {
+                    navController.navigate(Screen.ProdukList.route)
                 }
+            )
+        }
+
+        // ── Produk ────────────────────────────────────────────────────────
+        composable(Screen.ProdukList.route) {
+            ProdukListScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.ProdukForm.routeWithArgs,
+            arguments = listOf(
+                navArgument("id") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")
+            ProdukFormScreen(
+                navController = navController,
+                produkId = id
+            )
+        }
+
+        composable(
+            route = Screen.ProdukDetail.route,
+            arguments = listOf(
+                navArgument("id") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: return@composable
+            ProdukDetailScreen(
+                navController = navController,
+                produkId = id
             )
         }
     }
