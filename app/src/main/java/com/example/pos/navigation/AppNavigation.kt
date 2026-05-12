@@ -16,7 +16,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.pos.ui.DashboardScreen
+import com.example.pos.ui.KasScreen
 import com.example.pos.ui.LoginScreen
+import com.example.pos.ui.PengeluaranDetailScreen
+import com.example.pos.ui.PengeluaranFormScreen
+import com.example.pos.ui.PengeluaranListScreen
 import com.example.pos.ui.ProdukDetailScreen
 import com.example.pos.ui.ProdukFormScreen
 import com.example.pos.ui.ProdukListScreen
@@ -24,8 +28,8 @@ import com.example.pos.ui.RegisterScreen
 import com.example.pos.viewmodel.AuthCheckState
 import com.example.pos.viewmodel.AuthUiState
 import com.example.pos.viewmodel.AuthViewModel
-import com.example.pos.ui.KasScreen
 import com.example.pos.viewmodel.KasViewModel
+import com.example.pos.viewmodel.PengeluaranViewModel
 
 @Composable
 fun AppNavigation(
@@ -42,19 +46,11 @@ fun AppNavigation(
                 CircularProgressIndicator()
             }
         }
-
         is AuthCheckState.Authenticated -> {
-            MainNavHost(
-                authViewModel = authViewModel,
-                startDestination = Screen.Dashboard.route
-            )
+            MainNavHost(authViewModel = authViewModel, startDestination = Screen.Dashboard.route)
         }
-
         is AuthCheckState.NotAuthenticated -> {
-            MainNavHost(
-                authViewModel = authViewModel,
-                startDestination = Screen.Login.route
-            )
+            MainNavHost(authViewModel = authViewModel, startDestination = Screen.Login.route)
         }
     }
 }
@@ -65,9 +61,8 @@ fun MainNavHost(
     startDestination: String
 ) {
     val navController = rememberNavController()
-
-    // Ambil profile untuk mendapatkan role user
     val userProfile by authViewModel.userProfile.collectAsStateWithLifecycle()
+    val isAdmin = userProfile?.role == "admin"
 
     val email = authViewModel.email.collectAsStateWithLifecycle()
     val password = authViewModel.password.collectAsStateWithLifecycle()
@@ -119,12 +114,9 @@ fun MainNavHost(
                         popUpTo(Screen.Dashboard.route) { inclusive = true }
                     }
                 },
-                onNavigateToProduk = {
-                    navController.navigate(Screen.ProdukList.route)
-                },
-                onNavigateToKas = {
-                    navController.navigate(Screen.Kas.route)
-                }
+                onNavigateToProduk = { navController.navigate(Screen.ProdukList.route) },
+                onNavigateToKas = { navController.navigate(Screen.Kas.route) },
+                onNavigateToPengeluaran = { navController.navigate(Screen.PengeluaranList.route) }
             )
         }
 
@@ -144,33 +136,22 @@ fun MainNavHost(
             )
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")
-            ProdukFormScreen(
-                navController = navController,
-                produkId = id
-            )
+            ProdukFormScreen(navController = navController, produkId = id)
         }
 
         composable(
             route = Screen.ProdukDetail.route,
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                }
-            )
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: return@composable
-            ProdukDetailScreen(
-                navController = navController,
-                produkId = id
-            )
+            ProdukDetailScreen(navController = navController, produkId = id)
         }
 
-        // ── Kas ────────────────────────────────────────────────────────────
+        // ── Kas ───────────────────────────────────────────────────────────
         composable(Screen.Kas.route) {
             val kasViewModel: KasViewModel = viewModel()
             val role = userProfile?.role ?: "cashier"
 
-            // Trigger fetch data saat layar dibuka
             LaunchedEffect(role) {
                 kasViewModel.fetchKas(role)
             }
@@ -179,6 +160,44 @@ fun MainNavHost(
                 viewModel = kasViewModel,
                 userRole = role,
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // ── Pengeluaran ───────────────────────────────────────────────────
+        composable(Screen.PengeluaranList.route) {
+            PengeluaranListScreen(
+                navController = navController,
+                isAdmin = isAdmin
+            )
+        }
+
+        composable(
+            route = Screen.PengeluaranForm.routeWithArgs,
+            arguments = listOf(
+                navArgument("id") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")
+            PengeluaranFormScreen(
+                navController = navController,
+                pengeluaranId = id,
+                isAdmin = isAdmin
+            )
+        }
+
+        composable(
+            route = Screen.PengeluaranDetail.route,
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: return@composable
+            PengeluaranDetailScreen(
+                navController = navController,
+                pengeluaranId = id,
+                isAdmin = isAdmin
             )
         }
     }

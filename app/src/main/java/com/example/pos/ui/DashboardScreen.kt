@@ -10,8 +10,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun DashboardScreen(
     onLogoutClick: () -> Unit,
-    onNavigateToProduk: () -> Unit,   // Tambah parameter ini
-    onNavigateToKas: () -> Unit
+    onNavigateToProduk: () -> Unit,
+    onNavigateToKas: () -> Unit,
+    onNavigateToPengeluaran: () -> Unit  // tambah ini
 ) {
     Column(
         modifier = Modifier
@@ -31,7 +32,6 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // ── Menu Modul ────────────────────────────────────────────────────
         Button(
             onClick = onNavigateToProduk,
             modifier = Modifier.fillMaxWidth()
@@ -41,22 +41,23 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Nanti anggota lain tambah tombol modul mereka di sini
-        // Button(onClick = onNavigateToKas) { Text("Manajemen Kas") }
-        // Button(onClick = onNavigateToPelanggan) { Text("Manajemen Pelanggan") }
-        // Button(onClick = onNavigateToPengeluaran) { Text("Pengeluaran") }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Tombol untuk pindah ke halaman Kas
         Button(
             onClick = onNavigateToKas,
-            modifier = Modifier.fillMaxWidth(0.6f)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text("Kelola Kas")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = onNavigateToPengeluaran,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Pengeluaran")
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedButton(
             onClick = onLogoutClick,

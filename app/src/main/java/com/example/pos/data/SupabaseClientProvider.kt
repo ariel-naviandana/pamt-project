@@ -3,6 +3,8 @@ package com.example.pos.data
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.serializer.KotlinXSerializer
+import kotlinx.serialization.json.Json
 
 object SupabaseClientProvider {
 
@@ -19,6 +21,11 @@ object SupabaseClientProvider {
          * seperti login, register, logout, dan membaca session user.
          */
         install(Auth)
-        install(Postgrest)
+        install(Postgrest) {
+            serializer = KotlinXSerializer(Json {
+                encodeDefaults = true
+                ignoreUnknownKeys = true
+            })
+        }
     }
 }

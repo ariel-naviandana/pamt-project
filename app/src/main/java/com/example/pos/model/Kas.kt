@@ -9,7 +9,8 @@ data class Kas(
     val nama: String,
     val status: String,
     @SerialName("created_at")
-    val createdAt: String,
+//    val createdAt: String,
+    val createdAt: String = "",
     @SerialName("updated_at")
     val updatedAt: String? = null,
     val saldo: Double? = 0.0
