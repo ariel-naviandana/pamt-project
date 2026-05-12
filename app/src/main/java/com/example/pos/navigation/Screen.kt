@@ -20,4 +20,7 @@ sealed class Screen(val route: String) {
     object ProdukDetail : Screen("produk_detail/{id}") {
         fun createRoute(id: String) = "produk_detail/$id"
     }
+
+    // Kas
+    object Kas : Screen("kas")
 }

@@ -10,7 +10,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun DashboardScreen(
     onLogoutClick: () -> Unit,
-    onNavigateToProduk: () -> Unit  // Tambah parameter ini
+    onNavigateToProduk: () -> Unit,   // Tambah parameter ini
+    onNavigateToKas: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -46,6 +47,16 @@ fun DashboardScreen(
         // Button(onClick = onNavigateToPengeluaran) { Text("Pengeluaran") }
 
         Spacer(modifier = Modifier.height(32.dp))
+
+        // Tombol untuk pindah ke halaman Kas
+        Button(
+            onClick = onNavigateToKas,
+            modifier = Modifier.fillMaxWidth(0.6f)
+        ) {
+            Text("Kelola Kas")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedButton(
             onClick = onLogoutClick,
