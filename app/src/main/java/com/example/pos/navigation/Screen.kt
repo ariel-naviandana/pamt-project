@@ -1,28 +1,23 @@
 package com.example.pos.navigation
 
-/*
- * Sealed class juga bisa digunakan untuk route navigasi.
- * Tujuannya agar nama route tidak ditulis manual berkali-kali.
- */
 sealed class Screen(val route: String) {
-
-    /*
-     * Route untuk halaman login.
-     */
     object Login : Screen("login")
-
-    /*
-     * Route untuk halaman register.
-     */
     object Register : Screen("register")
-
-    /*
-     * Route untuk halaman dashboard.
-     */
     object Dashboard : Screen("dashboard")
 
-    /*
-     * Route untuk halaman kas.
-     */
-    object Kas : Screen("kas")
+    // ── Produk ────────────────────────────────────────────────────────────
+    object ProdukList : Screen("produk_list")
+
+    object ProdukForm : Screen("produk_form") {
+        // Mode tambah
+        fun createRoute() = "produk_form"
+        // Mode edit — kirim id lewat query param
+        fun createEditRoute(id: String) = "produk_form?id=$id"
+        // Route pattern untuk NavHost
+        const val routeWithArgs = "produk_form?id={id}"
+    }
+
+    object ProdukDetail : Screen("produk_detail/{id}") {
+        fun createRoute(id: String) = "produk_detail/$id"
+    }
 }

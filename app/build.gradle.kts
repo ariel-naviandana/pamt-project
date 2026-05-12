@@ -72,8 +72,11 @@ dependencies {
     // Supabase Auth
     implementation("io.github.jan-tennert.supabase:auth-kt")
 
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+
     // Ktor Android Client
     implementation("io.ktor:ktor-client-android:3.0.3")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
     debugImplementation(libs.androidx.ui.tooling)
 
     implementation("io.github.jan-tennert.supabase:postgrest-kt")

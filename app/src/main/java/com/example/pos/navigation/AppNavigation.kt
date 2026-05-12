@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -68,8 +67,6 @@ fun MainNavHost(
     val password = authViewModel.password.collectAsStateWithLifecycle()
     val uiState = authViewModel.uiState.collectAsStateWithLifecycle()
 
-    // Ambil profile untuk cek role
-    val userProfile by authViewModel.userProfile.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.value) {
         if (uiState.value is AuthUiState.Success) {
@@ -129,9 +126,6 @@ fun MainNavHost(
                             inclusive = true
                         }
                     }
-                },
-                onNavigateToKas = {
-                    navController.navigate(Screen.Kas.route)
                 }
             )
         }
