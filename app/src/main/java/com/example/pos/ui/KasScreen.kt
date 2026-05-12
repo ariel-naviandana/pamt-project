@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.pos.model.Kas
+import com.example.pos.ui.theme.ActiveStatusBg
+import com.example.pos.ui.theme.ActiveStatusText
 import com.example.pos.viewmodel.KasUiState
 import com.example.pos.viewmodel.KasViewModel
 
@@ -31,30 +32,28 @@ fun KasScreen(
     val selectedKas by viewModel.selectedKas.collectAsState()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Manajemen Kas") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Kembali")
-                    }
-                }
-            )
-        },
+        containerColor = MaterialTheme.colorScheme.surface,
         floatingActionButton = {
             // Jika role = admin, ada tombol untuk tambah kas
             if (userRole == "admin") {
                 FloatingActionButton(
                     onClick = { viewModel.setShowAddDialog(true) },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.offset(y = 16.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = "Tambah Kas")
                 }
             }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+        Box(modifier = Modifier
+            .padding(
+                start = 20.dp,
+                end = 20.dp,
+                top = 4.dp
+            )
+            .fillMaxSize()) {
             when (val state = uiState) {
                 is KasUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -80,8 +79,11 @@ fun KasScreen(
                         )
                     } else {
                         LazyColumn(
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            contentPadding = PaddingValues(
+                                top = 4.dp,
+                                bottom = 120.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             items(state.data) { kas ->
                                 KasItemCard(
@@ -264,9 +266,6 @@ fun KasItemCard(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isNonaktif) Color.LightGray.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isNonaktif) 0.dp else 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
@@ -284,13 +283,13 @@ fun KasItemCard(
 
                 Surface(
                     shape = MaterialTheme.shapes.small,
-                    color = if (isNonaktif) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer
+                    color = if (isNonaktif) MaterialTheme.colorScheme.errorContainer else ActiveStatusBg
                 ) {
                     Text(
                         text = kas.status.uppercase(),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isNonaktif) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
+                        color = if (isNonaktif) MaterialTheme.colorScheme.onErrorContainer else ActiveStatusText
                     )
                 }
             }
