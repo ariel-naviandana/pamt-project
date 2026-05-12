@@ -47,8 +47,16 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Tombol Baru untuk Modul Anda
-        Button(onClick = onNavigateToPelanggan, modifier = Modifier.fillMaxWidth()) {
-            Text("Kelola Pelanggan")
+        Button(
+            onClick = onNavigateToPelanggan,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Text("👥 Kelola Pelanggan")
         }
 
         Spacer(modifier = Modifier.height(8.dp))

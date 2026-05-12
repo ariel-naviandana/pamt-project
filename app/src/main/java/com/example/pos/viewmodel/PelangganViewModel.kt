@@ -12,16 +12,22 @@ import com.example.pos.model.UpdatePelangganRequest
 import com.example.pos.repository.PelangganRepository
 import kotlinx.coroutines.launch
 
-class PelangganViewModel(private val repository: PelangganRepository) : ViewModel() {
+class PelangganViewModel(
+    private val repository: PelangganRepository = PelangganRepository()
+) : ViewModel() {
 
     var isLoading by mutableStateOf(false)
     var statusMessage by mutableStateOf<String?>(null)
 
+    // ════════════════════════════════════════════════════════════════════
     // State untuk List Pelanggan
+    // ════════════════════════════════════════════════════════════════════
     private val _pelangganList = mutableStateListOf<Pelanggan>()
     val pelangganList: List<Pelanggan> get() = _pelangganList
 
-    // Fungsi Load Data
+    // ════════════════════════════════════════════════════════════════════
+    // Fungsi Load Data Pelanggan
+    // ════════════════════════════════════════════════════════════════════
     fun loadPelanggan() {
         viewModelScope.launch {
             isLoading = true
@@ -29,14 +35,18 @@ class PelangganViewModel(private val repository: PelangganRepository) : ViewMode
                 val data = repository.fetchPelanggan()
                 _pelangganList.clear()
                 _pelangganList.addAll(data)
+                statusMessage = null // Clear message jika berhasil
             } catch (e: Exception) {
-                statusMessage = "Gagal memuat data: ${e.message}"
+                statusMessage = "❌ Gagal memuat data: ${e.message}"
             } finally {
                 isLoading = false
             }
         }
     }
 
+    // ════════════════════════════════════════════════════════════════════
+    // Fungsi Tambah/Update Pelanggan (Upsert)
+    // ════════════════════════════════════════════════════════════════════
     fun upsertPelanggan(
         id: String? = null,
         nama: String,
@@ -49,24 +59,46 @@ class PelangganViewModel(private val repository: PelangganRepository) : ViewMode
             isLoading = true
             try {
                 if (id == null) {
-                    // Logika Tambah Pelanggan [cite: 19]
+                    // ── TAMBAH PELANGGAN BARU ──
                     repository.createPelanggan(
-                        CreatePelangganRequest(nama, noHp, alamat.ifEmpty { null }, email.ifEmpty { null })
+                        CreatePelangganRequest(
+                            p_nama = nama,
+                            p_no_hp = noHp,
+                            p_alamat = alamat.ifEmpty { null },
+                            p_email = email.ifEmpty { null }
+                        )
                     )
+                    statusMessage = "✅ Pelanggan berhasil ditambahkan"
+                    // Reload list setelah tambah
+                    loadPelanggan()
                 } else {
-                    // Logika Ubah Pelanggan [cite: 20]
+                    // ── UPDATE PELANGGAN YANG SUDAH ADA ──
                     repository.updatePelanggan(
-                        UpdatePelangganRequest(id, nama, noHp, alamat.ifEmpty { null }, email.ifEmpty { null }, status)
+                        UpdatePelangganRequest(
+                            p_id = id,
+                            p_nama = nama,
+                            p_no_hp = noHp,
+                            p_alamat = alamat.ifEmpty { null },
+                            p_email = email.ifEmpty { null },
+                            p_status = status
+                        )
                     )
+                    statusMessage = "✅ Pelanggan berhasil diperbarui"
+                    // Reload list setelah update
+                    loadPelanggan()
                 }
-                statusMessage = "Berhasil menyimpan data pelanggan"
             } catch (e: Exception) {
-                statusMessage = "Gagal: ${e.message}"
+                statusMessage = "❌ Gagal: ${e.message}"
             } finally {
                 isLoading = false
             }
         }
     }
 
-    fun clearMessage() { statusMessage = null }
+    // ════════════════════════════════════════════════════════════════════
+    // Fungsi Clear Message
+    // ════════════════════════════════════════════════════════════════════
+    fun clearMessage() {
+        statusMessage = null
+    }
 }
