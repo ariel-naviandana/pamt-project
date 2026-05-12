@@ -7,6 +7,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.pos.viewmodel.AuthUiState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(
@@ -18,6 +26,9 @@ fun LoginScreen(
     onLoginClick: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
+    var passwordVisible by remember {
+        mutableStateOf(false)
+    }
     /*
      * LoginScreen tidak menyimpan state email/password sendiri.
      * State dikirim dari luar, yaitu dari ViewModel.
@@ -44,6 +55,11 @@ fun LoginScreen(
             label = {
                 Text("Email")
             },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -55,7 +71,46 @@ fun LoginScreen(
             label = {
                 Text("Password")
             },
-            visualTransformation = PasswordVisualTransformation(),
+
+            visualTransformation =
+                if (passwordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                autoCorrectEnabled = false,
+                imeAction = ImeAction.Done
+            ),
+
+            trailingIcon = {
+
+                val image =
+                    if (passwordVisible)
+                        Icons.Default.VisibilityOff
+                    else
+                        Icons.Default.Visibility
+
+                val description =
+                    if (passwordVisible)
+                        "Hide password"
+                    else
+                        "Show password"
+
+                IconButton(
+                    onClick = {
+                        passwordVisible = !passwordVisible
+                    }
+                ) {
+                    Icon(
+                        imageVector = image,
+                        contentDescription = description
+                    )
+                }
+            },
+
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 

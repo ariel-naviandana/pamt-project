@@ -1,10 +1,14 @@
 package com.example.pos.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import com.example.pos.viewmodel.AuthUiState
 
@@ -18,6 +22,11 @@ fun RegisterScreen(
     onRegisterClick: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+
+    var passwordVisible by remember {
+        mutableStateOf(false)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -39,7 +48,14 @@ fun RegisterScreen(
             label = {
                 Text("Email")
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                autoCorrectEnabled = false
+            ),
+
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -50,8 +66,42 @@ fun RegisterScreen(
             label = {
                 Text("Password")
             },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+
+            modifier = Modifier.fillMaxWidth(),
+
+            visualTransformation =
+                if (passwordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        passwordVisible = !passwordVisible
+                    }
+                ) {
+                    Icon(
+                        imageVector =
+                            if (passwordVisible)
+                                Icons.Default.VisibilityOff
+                            else
+                                Icons.Default.Visibility,
+                        contentDescription =
+                            if (passwordVisible)
+                                "Hide Password"
+                            else
+                                "Show Password"
+                    )
+                }
+            },
+
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                autoCorrectEnabled = false
+            ),
+
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
