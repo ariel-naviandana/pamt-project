@@ -12,7 +12,8 @@ fun DashboardScreen(
     onLogoutClick: () -> Unit,
     onNavigateToProduk: () -> Unit,
     onNavigateToKas: () -> Unit,
-    onNavigateToPengeluaran: () -> Unit  // tambah ini
+    onNavigateToPengeluaran: () -> Unit,  // tambah ini
+    onNavigateToPelanggan: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -41,6 +42,13 @@ fun DashboardScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Manajemen Produk")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Tombol Baru untuk Modul Anda
+        Button(onClick = onNavigateToPelanggan, modifier = Modifier.fillMaxWidth()) {
+            Text("Kelola Pelanggan")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
