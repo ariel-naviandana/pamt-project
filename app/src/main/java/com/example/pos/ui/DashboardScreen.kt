@@ -1,68 +1,82 @@
 package com.example.pos.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.pos.model.Profile
+import com.example.pos.ui.components.DashboardMenuCard
 
 @Composable
 fun DashboardScreen(
-    onLogoutClick: () -> Unit,
-    onNavigateToProduk: () -> Unit,   // Tambah parameter ini
+    profile: Profile?,
+    onNavigateToProduk: () -> Unit,
     onNavigateToKas: () -> Unit
 ) {
+
+    val role = profile?.role ?: "cashier"
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(20.dp)
     ) {
-        Text(
-            text = "Dashboard",
-            style = MaterialTheme.typography.headlineMedium
-        )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(text = "Anda berhasil login ke aplikasi.")
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // ── Menu Modul ────────────────────────────────────────────────────
-        Button(
-            onClick = onNavigateToProduk,
+        ElevatedCard(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Manajemen Produk")
+
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+
+                Text(
+                    text = "Halo, ${profile?.nama ?: "User"}",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Role: ${role.uppercase()}"
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Nanti anggota lain tambah tombol modul mereka di sini
-        // Button(onClick = onNavigateToKas) { Text("Manajemen Kas") }
-        // Button(onClick = onNavigateToPelanggan) { Text("Manajemen Pelanggan") }
-        // Button(onClick = onNavigateToPengeluaran) { Text("Pengeluaran") }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Tombol untuk pindah ke halaman Kas
-        Button(
-            onClick = onNavigateToKas,
-            modifier = Modifier.fillMaxWidth(0.6f)
-        ) {
-            Text("Kelola Kas")
-        }
+        Text(
+            text = "Menu Utama",
+            style = MaterialTheme.typography.titleLarge
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedButton(
-            onClick = onLogoutClick,
-            modifier = Modifier.fillMaxWidth()
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Logout")
+
+            item {
+                DashboardMenuCard(
+                    title = "Produk",
+                    icon = Icons.Default.Inventory2,
+                    onClick = onNavigateToProduk
+                )
+            }
+
+            item {
+                DashboardMenuCard(
+                    title = "Kas",
+                    icon = Icons.Default.AccountBalanceWallet,
+                    onClick = onNavigateToKas
+                )
+            }
         }
     }
 }
