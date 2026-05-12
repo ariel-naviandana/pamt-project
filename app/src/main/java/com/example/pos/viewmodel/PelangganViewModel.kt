@@ -26,7 +26,12 @@ class PelangganViewModel(
     val pelangganList: List<Pelanggan> get() = _pelangganList
 
     // ════════════════════════════════════════════════════════════════════
-    // Fungsi Load Data Pelanggan
+    // State untuk Single Pelanggan (saat edit)
+    // ════════════════════════════════════════════════════════════════════
+    var selectedPelanggan by mutableStateOf<Pelanggan?>(null)
+
+    // ════════════════════════════════════════════════════════════════════
+    // Fungsi Load Data Pelanggan (List)
     // ════════════════════════════════════════════════════════════════════
     fun loadPelanggan() {
         viewModelScope.launch {
@@ -38,6 +43,27 @@ class PelangganViewModel(
                 statusMessage = null // Clear message jika berhasil
             } catch (e: Exception) {
                 statusMessage = "❌ Gagal memuat data: ${e.message}"
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Fungsi Load Data Pelanggan Berdasarkan ID (untuk Edit)
+    // ════════════════════════════════════════════════════════════════════
+    fun loadPelangganById(id: String) {
+        viewModelScope.launch {
+            isLoading = true
+            try {
+                val data = repository.fetchPelangganById(id)
+                selectedPelanggan = data
+                if (data == null) {
+                    statusMessage = "❌ Pelanggan tidak ditemukan"
+                }
+            } catch (e: Exception) {
+                statusMessage = "❌ Gagal memuat data: ${e.message}"
+                selectedPelanggan = null
             } finally {
                 isLoading = false
             }

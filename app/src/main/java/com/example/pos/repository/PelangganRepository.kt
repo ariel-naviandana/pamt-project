@@ -22,13 +22,27 @@ class PelangganRepository {
     }
 
     // ════════════════════════════════════════════════════════════════════
+    // Ambil Data Pelanggan Berdasarkan ID
+    // ════════════════════════════════════════════════════════════════════
+    suspend fun fetchPelangganById(id: String): Pelanggan? {
+        return try {
+            supabase.postgrest.rpc(
+                "get_pelanggan_by_id",
+                mapOf("p_id" to id)
+            ).decodeSingleOrNull<Pelanggan>()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
     // Tambah Pelanggan Baru
     // ════════════════════════════════════════════════════════════════════
     suspend fun createPelanggan(request: CreatePelangganRequest) {
         supabase.postgrest.rpc("create_pelanggan", request)
     }
 
-    // ══════════════════════════════════���═════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     // Update Pelanggan
     // ════════════════════════════════════════════════════════════════════
     suspend fun updatePelanggan(request: UpdatePelangganRequest) {
