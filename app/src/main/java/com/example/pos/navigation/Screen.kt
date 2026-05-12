@@ -23,4 +23,13 @@ sealed class Screen(val route: String) {
 
     // Kas
     object Kas : Screen("kas")
+
+    // Main Screen
+    object Main : Screen("main")
+
+    // Home
+    object Home : Screen("home")
+
+    // Profile
+    object Profile : Screen("profile")
 }
