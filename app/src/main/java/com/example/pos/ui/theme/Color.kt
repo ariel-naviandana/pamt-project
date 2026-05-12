@@ -2,14 +2,15 @@ package com.example.pos.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val GreenPrimary = Color(0xFF2E7D32) // Hijau tua seperti logo
-val GreenLight = Color(0xFFE8F5E9)   // Hijau sangat muda untuk background/error
+val GreenPrimary = Color(0xFF52C771)
+val GreenDark = Color(0x4D1B5E20)
+
+val GreenContainer = Color(0xFFC8E6C9)
+
+val BackgroundLight = Color(0xFFF5FFF5)
+
 val White = Color(0xFFFFFFFF)
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Warna Status Kas
+val ActiveStatusText = Color(0xFFC8E6C9)
+val ActiveStatusBg = Color(0xFF1EB343)
