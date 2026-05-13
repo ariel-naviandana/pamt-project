@@ -23,7 +23,7 @@ sealed class BottomNavItem(
     )
 
     object Kas : BottomNavItem(
-        "kas",
+        Screen.KasList.route,
         "Kas",
         Icons.Default.AccountBalanceWallet
     )

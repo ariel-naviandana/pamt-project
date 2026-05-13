@@ -7,6 +7,15 @@ import com.example.pos.model.KasIdRequest
 import com.example.pos.model.UpdateKasRequest
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
+import kotlinx.serialization.Serializable
+
+// Parameter RPC penyesuaian saldo
+@Serializable
+data class AdjustSaldoRequest(
+    val p_kas_id: String,
+    val p_tipe: String,
+    val p_nominal: Double
+)
 
 class KasRepository {
     private val supabase = SupabaseClientProvider.client
@@ -28,6 +37,19 @@ class KasRepository {
         supabase.postgrest.rpc(
             "update_kas",
             UpdateKasRequest(p_id = id, p_nama = nama, p_saldo = saldo)
+        )
+    }
+
+    // RPC penyesuaian_saldo_kas
+    suspend fun adjustSaldo(kasId: String, tipe: String, nominal: Double) {
+        // Tipe: 'debit' (tambah) atau 'kredit' (kurang)
+        supabase.postgrest.rpc(
+            "penyesuaian_saldo_kas",
+            AdjustSaldoRequest(
+                p_kas_id = kasId,
+                p_tipe = tipe,
+                p_nominal = nominal
+            )
         )
     }
 

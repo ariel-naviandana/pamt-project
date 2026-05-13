@@ -43,7 +43,7 @@ fun MainScreen(
         if (currentRoute == route) return
 
         bottomNavController.navigate(route) {
-            // Gunakan findStartDestination().id sesuai standar resmi Google
+            // Menggunakan findStartDestination().id sesuai standar resmi Google
             popUpTo(bottomNavController.graph.findStartDestination().id) {
                 saveState = true
             }
@@ -57,7 +57,7 @@ fun MainScreen(
         currentRoute?.startsWith("produk") == true -> "Manajemen Produk"
         currentRoute?.startsWith("pengeluaran") == true -> "Manajemen Pengeluaran"
         currentRoute?.startsWith("pelanggan") == true -> "Manajemen Pelanggan"
-        currentRoute == BottomNavItem.Kas.route -> "Manajemen Kas"
+        currentRoute?.startsWith("kas") == true -> "Manajemen Kas"
         currentRoute == BottomNavItem.Profile.route -> "Profile"
         else -> "MyKasir Dashboard"
     }
@@ -69,6 +69,7 @@ fun MainScreen(
             BottomNavItem.Produk.route -> currentRoute?.startsWith("produk") == true
             BottomNavItem.Pengeluaran.route -> currentRoute?.startsWith("pengeluaran") == true
             BottomNavItem.Pelanggan.route -> currentRoute?.startsWith("pelanggan") == true
+            BottomNavItem.Kas.route -> currentRoute?.startsWith("kas") == true
             else -> currentRoute == itemRoute
         }
     }
@@ -136,14 +137,27 @@ fun MainScreen(
                     ProdukFormScreen(navController = bottomNavController, produkId = id, isAdmin = role == "admin")
                 }
 
-                // ── KAS ──
-                composable(BottomNavItem.Kas.route) {
+                // ── KAS ──────────────────────────────────────────────────────────
+                composable(Screen.KasList.route) {
                     val kasViewModel: KasViewModel = viewModel()
-                    LaunchedEffect(role) { kasViewModel.fetchKas(role) }
-                    KasScreen(
-                        viewModel = kasViewModel,
-                        userRole = role,
-                        onBackClick = { bottomNavController.popBackStack() }
+                    KasListScreen(
+                        navController = bottomNavController,
+                        isAdmin = role == "admin",
+                        vm = kasViewModel
+                    )
+                }
+
+                composable(
+                    route = Screen.KasForm.routeWithArgs,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id")
+                    val kasViewModel: KasViewModel = viewModel()
+                    KasFormScreen(
+                        navController = bottomNavController,
+                        kasId = id,
+                        isAdmin = role == "admin",
+                        vm = kasViewModel
                     )
                 }
 

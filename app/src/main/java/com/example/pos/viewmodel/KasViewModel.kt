@@ -6,112 +6,121 @@ import com.example.pos.model.Kas
 import com.example.pos.repository.KasRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class KasListState(
+    val isLoading: Boolean = false,
+    val kasList: List<Kas> = emptyList(),
+    val error: String? = null
+)
+
 sealed class KasUiState {
+    object Idle : KasUiState()
     object Loading : KasUiState()
-    data class Success(val data: List<Kas>) : KasUiState()
+    object Success : KasUiState()
     data class Error(val message: String) : KasUiState()
 }
 
 class KasViewModel : ViewModel() {
     private val repository = KasRepository()
 
-    private val _uiState = MutableStateFlow<KasUiState>(KasUiState.Loading)
-    val uiState: StateFlow<KasUiState> = _uiState
+    private val _listState = MutableStateFlow(KasListState())
+    val listState: StateFlow<KasListState> = _listState.asStateFlow()
 
-    private val _selectedKas = MutableStateFlow<Kas?>(null)
-    val selectedKas: StateFlow<Kas?> = _selectedKas
-
-    private val _showAddDialog = MutableStateFlow(false)
-    val showAddDialog: StateFlow<Boolean> = _showAddDialog
+    private val _uiState = MutableStateFlow<KasUiState>(KasUiState.Idle)
+    val uiState: StateFlow<KasUiState> = _uiState.asStateFlow()
 
     private var currentUserRole: String = "cashier"
 
-    // Mendapatkan daftar kas
-    fun fetchKas(role: String) {
-        currentUserRole = role // Update role yang sedang aktif
+    fun init(isAdmin: Boolean) {
+        this.currentUserRole = if (isAdmin) "admin" else "cashier"
+        fetchKas()
+    }
+
+    fun fetchKas() {
         viewModelScope.launch {
-            _uiState.value = KasUiState.Loading
+            _listState.value = _listState.value.copy(isLoading = true, error = null)
             try {
-                val kasList = repository.getKasList(role)
-                _uiState.value = KasUiState.Success(kasList)
+                val kasList = repository.getKasList(currentUserRole)
+                _listState.value = KasListState(kasList = kasList)
             } catch (e: Exception) {
-                _uiState.value = KasUiState.Error(e.message ?: "Gagal memuat data kas")
+                _listState.value = _listState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Gagal memuat data kas"
+                )
             }
         }
     }
 
-    fun setShowAddDialog(show: Boolean) {
-        _showAddDialog.value = show
-    }
-
-    // Tambah kas baru
     fun addKas(nama: String, saldo: String) {
         viewModelScope.launch {
             _uiState.value = KasUiState.Loading
             try {
                 val saldoDouble = saldo.toDoubleOrNull() ?: 0.0
                 repository.insertKas(nama, saldoDouble)
-                _showAddDialog.value = false
-
-                // Gunakan currentUserRole yang sudah disimpan
-                fetchKas(currentUserRole)
-
+                _uiState.value = KasUiState.Success
+                fetchKas()
             } catch (e: Exception) {
                 _uiState.value = KasUiState.Error("Gagal menyimpan: ${e.message}")
             }
         }
     }
 
-    fun selectKas(kas: Kas?) {
-        _selectedKas.value = kas
-    }
-
-    // Update nama dan saldo kas
-    fun updateKas(id: String, nama: String, saldo: String) {
+    fun updateKasAndAdjust(
+        id: String,
+        nama: String,
+        currentSaldo: Double,
+        adjustmentType: String?,
+        adjustmentNominal: String
+    ) {
         viewModelScope.launch {
             _uiState.value = KasUiState.Loading
             try {
-                val saldoDouble = saldo.toDoubleOrNull() ?: 0.0
-                repository.updateKas(id, nama, saldoDouble)
-                _selectedKas.value = null
-
-                // Gunakan currentUserRole untuk refresh
-                fetchKas(currentUserRole)
+                // 1. Update Nama
+                repository.updateKas(id, nama, currentSaldo)
+                
+                // 2. Adjust Saldo jika ada nominal
+                val nominalDouble = adjustmentNominal.toDoubleOrNull() ?: 0.0
+                if (nominalDouble > 0 && adjustmentType != null) {
+                    repository.adjustSaldo(id, adjustmentType, nominalDouble)
+                }
+                
+                _uiState.value = KasUiState.Success
+                fetchKas()
             } catch (e: Exception) {
                 _uiState.value = KasUiState.Error("Gagal update: ${e.message}")
             }
         }
     }
 
-    // Soft delete kas
     fun deleteKas(id: String) {
         viewModelScope.launch {
             _uiState.value = KasUiState.Loading
             try {
                 repository.deleteKas(id)
-                _selectedKas.value = null
-
-                // Gunakan currentUserRole untuk refresh
-                fetchKas(currentUserRole)
+                _uiState.value = KasUiState.Success
+                fetchKas()
             } catch (e: Exception) {
-                _uiState.value = KasUiState.Error("Gagal hapus: ${e.message}")
+                _uiState.value = KasUiState.Error("Gagal nonaktifkan: ${e.message}")
             }
         }
     }
 
-    // Mengaktifkan kembali kas yang dinonaktifkan
     fun activateKas(id: String) {
-        _uiState.value = KasUiState.Loading
         viewModelScope.launch {
+            _uiState.value = KasUiState.Loading
             try {
                 repository.activateKas(id)
-                _selectedKas.value = null // Tutup dialog
-                fetchKas(currentUserRole) // Refresh daftar kas
+                _uiState.value = KasUiState.Success
+                fetchKas()
             } catch (e: Exception) {
                 _uiState.value = KasUiState.Error("Gagal mengaktifkan: ${e.message}")
             }
         }
+    }
+
+    fun resetUiState() {
+        _uiState.value = KasUiState.Idle
     }
 }

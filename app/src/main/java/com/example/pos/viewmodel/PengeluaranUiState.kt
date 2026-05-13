@@ -22,7 +22,7 @@ data class PengeluaranDetailState(
     val error: String? = null
 )
 
-data class KasListState(
+data class KasSimpleListState(
     val kasList: List<KasSimple> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null

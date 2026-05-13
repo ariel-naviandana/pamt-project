@@ -22,7 +22,13 @@ sealed class Screen(val route: String) {
     }
 
     // ── Kas ───────────────────────────────────────────────────────────
-    object Kas : Screen("kas")
+    object KasList : Screen("kas_list")
+
+    object KasForm : Screen("kas_form") {
+        fun createRoute() = "kas_form"
+        fun createEditRoute(id: String) = "kas_form?id=$id"
+        const val routeWithArgs = "kas_form?id={id}"
+    }
 
     // Main Screen
     object Main : Screen("main")

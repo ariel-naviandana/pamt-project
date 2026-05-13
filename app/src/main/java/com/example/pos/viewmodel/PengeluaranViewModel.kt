@@ -20,8 +20,8 @@ class PengeluaranViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<PengeluaranUiState>(PengeluaranUiState.Idle)
     val uiState: StateFlow<PengeluaranUiState> = _uiState.asStateFlow()
 
-    private val _kasListState = MutableStateFlow(KasListState())
-    val kasListState: StateFlow<KasListState> = _kasListState.asStateFlow()
+    private val _kasListState = MutableStateFlow(KasSimpleListState())
+    val kasListState: StateFlow<KasSimpleListState> = _kasListState.asStateFlow()
 
     // Simpan role agar tidak perlu pass terus dari UI
     private var isAdmin: Boolean = false
@@ -67,12 +67,12 @@ class PengeluaranViewModel : ViewModel() {
     // ── KAS ───────────────────────────────────────────────────────────────
     fun loadKasAktif() {
         viewModelScope.launch {
-            _kasListState.value = KasListState(isLoading = true)
+            _kasListState.value = KasSimpleListState(isLoading = true)
             try {
                 val list = repository.getKasAktif()
-                _kasListState.value = KasListState(kasList = list)
+                _kasListState.value = KasSimpleListState(kasList = list)
             } catch (e: Exception) {
-                _kasListState.value = KasListState(
+                _kasListState.value = KasSimpleListState(
                     error = e.message ?: "Gagal memuat kas"
                 )
             }
