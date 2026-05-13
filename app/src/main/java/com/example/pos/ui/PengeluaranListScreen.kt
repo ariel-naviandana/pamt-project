@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,41 +15,38 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.pos.model.Produk
+import com.example.pos.model.PengeluaranWithKas
 import com.example.pos.navigation.Screen
-import com.example.pos.viewmodel.ProdukViewModel
+import com.example.pos.viewmodel.PengeluaranViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProdukListScreen(
+fun PengeluaranListScreen(
     navController: NavController,
     isAdmin: Boolean,
-    vm: ProdukViewModel = viewModel()
+    vm: PengeluaranViewModel = viewModel()
 ) {
     val listState by vm.listState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { vm.init(isAdmin) }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = {
+            TopAppBar(title = { Text("Pengeluaran") })
+        },
         floatingActionButton = {
-            // FAB hanya muncul untuk admin
-            if (isAdmin) {
-                FloatingActionButton(
-                    onClick = { navController.navigate(Screen.ProdukForm.createRoute()) },
-                    modifier = Modifier.offset(y = 16.dp),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Tambah Produk")
-                }
+            FloatingActionButton(
+                onClick = { navController.navigate(Screen.PengeluaranForm.createRoute()) }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Tambah Pengeluaran")
             }
         }
     ) { padding ->
         Box(
             modifier = Modifier
+                .padding(padding)
                 .fillMaxSize()
         ) {
             when {
@@ -64,19 +60,21 @@ fun ProdukListScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        Text("Gagal memuat pengeluaran")
                         Text(
-                            text = "Gagal memuat produk",
-                            style = MaterialTheme.typography.bodyLarge
+                            text = listState.error ?: "",  // tambah ini
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
                         )
-                        TextButton(onClick = { vm.loadProduk() }) {
+                        TextButton(onClick = { vm.loadPengeluaran() }) {
                             Text("Coba Lagi")
                         }
                     }
                 }
 
-                listState.produkList.isEmpty() -> {
+                listState.pengeluaranList.isEmpty() -> {
                     Text(
-                        text = "Belum ada produk",
+                        text = "Belum ada pengeluaran",
                         modifier = Modifier.align(Alignment.Center),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -84,23 +82,18 @@ fun ProdukListScreen(
 
                 else -> {
                     LazyColumn(
-                        contentPadding = PaddingValues(
-                            start = 20.dp,
-                            end = 20.dp,
-                            top = 4.dp,
-                            bottom = 120.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(
-                            items = listState.produkList,
+                            items = listState.pengeluaranList,
                             key = { it.id }
-                        ) { produk ->
-                            ProdukCard(
-                                produk = produk,
+                        ) { pengeluaran ->
+                            PengeluaranCard(
+                                pengeluaran = pengeluaran,
                                 onClick = {
                                     navController.navigate(
-                                        Screen.ProdukDetail.createRoute(produk.id)
+                                        Screen.PengeluaranDetail.createRoute(pengeluaran.id)
                                     )
                                 }
                             )
@@ -113,17 +106,28 @@ fun ProdukListScreen(
 }
 
 @Composable
-private fun ProdukCard(
-    produk: Produk,
+private fun PengeluaranCard(
+    pengeluaran: PengeluaranWithKas,
     onClick: () -> Unit
 ) {
     val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+
+    val statusColor = when (pengeluaran.status) {
+        "disetujui" -> MaterialTheme.colorScheme.primaryContainer
+        "dibatalkan" -> MaterialTheme.colorScheme.errorContainer
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    val statusTextColor = when (pengeluaran.status) {
+        "disetujui" -> MaterialTheme.colorScheme.onPrimaryContainer
+        "dibatalkan" -> MaterialTheme.colorScheme.onErrorContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -134,44 +138,41 @@ private fun ProdukCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = produk.nama,
+                    text = pengeluaran.kodePengeluaran,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = pengeluaran.deskripsi,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = formatter.format(produk.harga),
+                    text = formatter.format(pengeluaran.nominal),
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Stok: ${produk.stok.toInt()} ${produk.satuan}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (produk.stok <= 0)
-                        MaterialTheme.colorScheme.error
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                pengeluaran.kas?.let {
+                    Text(
+                        text = "Kas: ${it.nama}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Badge status
             Surface(
                 shape = MaterialTheme.shapes.small,
-                color = if (produk.status == "aktif")
-                    MaterialTheme.colorScheme.primaryContainer
-                else
-                    MaterialTheme.colorScheme.errorContainer
+                color = statusColor
             ) {
                 Text(
-                    text = produk.status,
+                    text = pengeluaran.status,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (produk.status == "aktif")
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    else
-                        MaterialTheme.colorScheme.onErrorContainer
+                    color = statusTextColor
                 )
             }
         }

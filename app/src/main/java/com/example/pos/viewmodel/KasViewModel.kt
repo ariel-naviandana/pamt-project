@@ -49,6 +49,7 @@ class KasViewModel : ViewModel() {
     // Tambah kas baru
     fun addKas(nama: String, saldo: String) {
         viewModelScope.launch {
+            _uiState.value = KasUiState.Loading
             try {
                 val saldoDouble = saldo.toDoubleOrNull() ?: 0.0
                 repository.insertKas(nama, saldoDouble)
@@ -70,6 +71,7 @@ class KasViewModel : ViewModel() {
     // Update nama dan saldo kas
     fun updateKas(id: String, nama: String, saldo: String) {
         viewModelScope.launch {
+            _uiState.value = KasUiState.Loading
             try {
                 val saldoDouble = saldo.toDoubleOrNull() ?: 0.0
                 repository.updateKas(id, nama, saldoDouble)
@@ -86,6 +88,7 @@ class KasViewModel : ViewModel() {
     // Soft delete kas
     fun deleteKas(id: String) {
         viewModelScope.launch {
+            _uiState.value = KasUiState.Loading
             try {
                 repository.deleteKas(id)
                 _selectedKas.value = null
@@ -100,6 +103,7 @@ class KasViewModel : ViewModel() {
 
     // Mengaktifkan kembali kas yang dinonaktifkan
     fun activateKas(id: String) {
+        _uiState.value = KasUiState.Loading
         viewModelScope.launch {
             try {
                 repository.activateKas(id)

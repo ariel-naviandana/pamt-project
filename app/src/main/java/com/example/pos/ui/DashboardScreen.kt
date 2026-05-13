@@ -1,9 +1,11 @@
 package com.example.pos.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,7 +17,10 @@ import com.example.pos.ui.components.DashboardMenuCard
 fun DashboardScreen(
     profile: Profile?,
     onNavigateToProduk: () -> Unit,
-    onNavigateToKas: () -> Unit
+    onNavigateToKas: () -> Unit,
+    onLogoutClick: () -> Unit,
+    onNavigateToPengeluaran: () -> Unit,  // tambah ini
+    onNavigateToPelanggan: () -> Unit
 ) {
 
     val role = profile?.role ?: "cashier"
@@ -75,6 +80,22 @@ fun DashboardScreen(
                     title = "Kas",
                     icon = Icons.Default.AccountBalanceWallet,
                     onClick = onNavigateToKas
+                )
+            }
+
+            item {
+                DashboardMenuCard(
+                    title = "Kelola Pelanggan",
+                    icon = Icons.Default.AccountBalanceWallet,
+                    onClick = onNavigateToPelanggan
+                )
+            }
+
+            item {
+                DashboardMenuCard(
+                    title = "Pengeluaran",
+                    icon = Icons.Default.AccountBalanceWallet,
+                    onClick = onNavigateToPengeluaran
                 )
             }
         }

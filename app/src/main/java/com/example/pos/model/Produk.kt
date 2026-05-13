@@ -14,3 +14,31 @@ data class Produk(
     @SerialName("created_at") val createdAt: String = "",
     @SerialName("updated_at") val updatedAt: String? = null
 )
+
+@Serializable
+data class CreateProdukRequest(
+    val p_nama: String,
+    val p_harga: Double,
+    val p_satuan: String,
+    val p_stok: Double
+)
+
+@Serializable
+data class UpdateProdukRequest(
+    val p_id: String,
+    val p_nama: String,
+    val p_harga: Double,
+    val p_satuan: String
+)
+
+@Serializable
+data class UpdateStokManualRequest(
+    val p_produk_id: String,
+    val p_tipe: String,
+    val p_qty: Int
+)
+
+@Serializable
+data class ToggleStatusProdukRequest(
+    val p_id: String
+)

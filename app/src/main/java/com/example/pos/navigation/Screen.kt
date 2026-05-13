@@ -5,7 +5,7 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
     object Dashboard : Screen("dashboard")
 
-    // ── Produk ────────────────────────────────────────────────────────────
+    // ── Produk ──────────────────────────────────────────────────────────
     object ProdukList : Screen("produk_list")
 
     object ProdukForm : Screen("produk_form") {
@@ -21,7 +21,7 @@ sealed class Screen(val route: String) {
         fun createRoute(id: String) = "produk_detail/$id"
     }
 
-    // Kas
+    // ── Kas ───────────────────────────────────────────────────────────
     object Kas : Screen("kas")
 
     // Main Screen
@@ -32,4 +32,26 @@ sealed class Screen(val route: String) {
 
     // Profile
     object Profile : Screen("profile")
+
+    // ── Pengeluaran ───────────────────────────────────────────────────────
+    object PengeluaranList : Screen("pengeluaran_list")
+
+    object PengeluaranForm : Screen("pengeluaran_form") {
+        fun createRoute() = "pengeluaran_form"
+        fun createEditRoute(id: String) = "pengeluaran_form?id=$id"
+        const val routeWithArgs = "pengeluaran_form?id={id}"
+    }
+
+    object PengeluaranDetail : Screen("pengeluaran_detail/{id}") {
+        fun createRoute(id: String) = "pengeluaran_detail/$id"
+    }
+
+    // ── Pelanggan ──────────────────────────────────────────────────────
+    object PelangganList : Screen("pelanggan_list")
+
+    object PelangganForm : Screen("pelanggan_form") {
+        fun createRoute() = "pelanggan_form"
+        fun createEditRoute(id: String) = "pelanggan_form?id=$id"
+        const val routeWithArgs = "pelanggan_form?id={id}"
+    }
 }

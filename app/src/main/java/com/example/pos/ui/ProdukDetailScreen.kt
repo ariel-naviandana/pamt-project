@@ -30,12 +30,11 @@ import androidx.compose.ui.text.input.KeyboardType
 fun ProdukDetailScreen(
     navController: NavController,
     produkId: String,
+    isAdmin: Boolean,
     vm: ProdukViewModel = viewModel()
 ) {
     val detailState by vm.detailState.collectAsStateWithLifecycle()
     val uiState by vm.uiState.collectAsStateWithLifecycle()
-    val userRole by vm.userRole.collectAsStateWithLifecycle()
-    val isAdmin = userRole == "admin"
 
     var showStokDialog by remember { mutableStateOf(false) }
     var showToggleDialog by remember { mutableStateOf(false) }

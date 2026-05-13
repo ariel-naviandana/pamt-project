@@ -8,24 +8,33 @@ data class Kas(
     val id: String,
     val nama: String,
     val status: String,
-    @SerialName("created_at")
-    val createdAt: String,
-    @SerialName("updated_at")
-    val updatedAt: String? = null,
+    @SerialName("created_at") val createdAt: String = "",
+    @SerialName("updated_at") val updatedAt: String? = null,
     val saldo: Double? = 0.0
 )
 
 @Serializable
-data class KasInsert(
+data class KasSimple(
+    val id: String,
     val nama: String,
-    val saldo: Double
+    val saldo: Double? = 0.0,
+    val status: String
 )
 
 @Serializable
-data class KasUpdate(
-    val nama: String,
-    val saldo: Double,
+data class CreateKasRequest(
+    val p_nama: String,
+    val p_saldo: Double
+)
 
-    @SerialName("updated_at")
-    val updatedAt: String = "now()"
+@Serializable
+data class UpdateKasRequest(
+    val p_id: String,
+    val p_nama: String,
+    val p_saldo: Double
+)
+
+@Serializable
+data class KasIdRequest(
+    val p_id: String
 )
