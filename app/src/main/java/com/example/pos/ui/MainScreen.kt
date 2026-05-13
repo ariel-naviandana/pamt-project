@@ -90,7 +90,7 @@ fun MainScreen(
                         // Cukup panggil fungsi yang sudah distandarisasi
                         onClick = { navigateToTab(item.route) },
                         icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
-                        label = { Text(item.title) }
+//                        label = { Text(item.title) }
                     )
                 }
             }
