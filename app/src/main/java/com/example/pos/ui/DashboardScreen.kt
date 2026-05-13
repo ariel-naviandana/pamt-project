@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -86,7 +88,7 @@ fun DashboardScreen(
             item {
                 DashboardMenuCard(
                     title = "Pelanggan",
-                    icon = Icons.Default.AccountBalanceWallet,
+                    icon = Icons.Default.People,
                     onClick = onNavigateToPelanggan
                 )
             }
@@ -94,7 +96,7 @@ fun DashboardScreen(
             item {
                 DashboardMenuCard(
                     title = "Pengeluaran",
-                    icon = Icons.Default.AccountBalanceWallet,
+                    icon = Icons.Default.Receipt,
                     onClick = onNavigateToPengeluaran
                 )
             }
