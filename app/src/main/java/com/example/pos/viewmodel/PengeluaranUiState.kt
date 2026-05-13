@@ -1,6 +1,6 @@
 package com.example.pos.viewmodel
 
-import com.example.pos.model.Kas
+import com.example.pos.model.KasSimple
 import com.example.pos.model.PengeluaranWithKas
 
 sealed class PengeluaranUiState {
@@ -23,7 +23,7 @@ data class PengeluaranDetailState(
 )
 
 data class KasListState(
-    val kasList: List<Kas> = emptyList(),
+    val kasList: List<KasSimple> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 )

@@ -25,13 +25,12 @@ import java.util.Locale
 @Composable
 fun ProdukListScreen(
     navController: NavController,
+    isAdmin: Boolean,
     vm: ProdukViewModel = viewModel()
 ) {
     val listState by vm.listState.collectAsStateWithLifecycle()
-    val userRole by vm.userRole.collectAsStateWithLifecycle()
-    val isAdmin = userRole == "admin"
 
-    LaunchedEffect(Unit) { vm.loadProduk() }
+    LaunchedEffect(Unit) { vm.init(isAdmin) }
 
     Scaffold(
         topBar = {

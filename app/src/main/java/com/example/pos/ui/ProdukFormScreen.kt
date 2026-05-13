@@ -22,6 +22,7 @@ import com.example.pos.viewmodel.ProdukViewModel
 fun ProdukFormScreen(
     navController: NavController,
     produkId: String? = null,
+    isAdmin: Boolean,
     vm: ProdukViewModel = viewModel()
 ) {
     val detailState by vm.detailState.collectAsStateWithLifecycle()

@@ -1,91 +1,75 @@
 package com.example.pos.repository
 
 import com.example.pos.data.SupabaseClientProvider
+import com.example.pos.model.CreateProdukRequest
 import com.example.pos.model.LogProduk
-import com.example.pos.model.LogProdukInsert
 import com.example.pos.model.Produk
-import com.example.pos.model.UserProfile
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Order
+import com.example.pos.model.ToggleStatusProdukRequest
+import com.example.pos.model.UpdateProdukRequest
+import com.example.pos.model.UpdateStokManualRequest
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 
 class ProdukRepository {
     private val client = SupabaseClientProvider.client
 
-    // ── PROFILE / ROLE ────────────────────────────────────────────────────
-    suspend fun getUserRole(): String {
-        val userId = client.auth.currentSessionOrNull()?.user?.id ?: return "cashier"
-        val profile = client.from("profiles")
-            .select { filter { eq("id", userId) } }
-            .decodeSingle<UserProfile>()
-        return profile.role
-    }
-
     // ── READ ──────────────────────────────────────────────────────────────
     suspend fun getAllProduk(): List<Produk> =
-        client.from("produk")
-            .select()
-            .decodeList()
+        client.postgrest.rpc("get_all_produk").decodeList()
 
     suspend fun getProdukById(id: String): Produk =
-        client.from("produk")
-            .select { filter { eq("id", id) } }
-            .decodeSingle()
+        client.postgrest.rpc(
+            "get_produk_by_id",
+            mapOf("p_id" to id)
+        ).decodeSingle()
 
     suspend fun getLogProduk(produkId: String): List<LogProduk> =
-        client.from("log_produk")
-            .select {
-                filter { eq("produk_id", produkId) }
-                order("created_at", Order.DESCENDING)
-            }
-            .decodeList()
+        client.postgrest.rpc(
+            "get_log_produk",
+            mapOf("p_produk_id" to produkId)
+        ).decodeList()
 
     // ── CREATE ────────────────────────────────────────────────────────────
     suspend fun tambahProduk(nama: String, harga: Double, satuan: String, stok: Double) {
-        val produk = Produk(
-            nama = nama,
-            harga = harga,
-            satuan = satuan,
-            stok = stok
+        client.postgrest.rpc(
+            "create_produk",
+            CreateProdukRequest(
+                p_nama = nama,
+                p_harga = harga,
+                p_satuan = satuan,
+                p_stok = stok
+            )
         )
-        client.from("produk").insert(produk)
     }
 
     // ── UPDATE ────────────────────────────────────────────────────────────
     suspend fun updateProduk(id: String, nama: String, harga: Double, satuan: String) {
-        client.from("produk").update(
-            {
-                set("nama", nama)
-                set("harga", harga)
-                set("satuan", satuan)
-                set("updated_at", "now()")
-            }
-        ) { filter { eq("id", id) } }
+        client.postgrest.rpc(
+            "update_produk",
+            UpdateProdukRequest(
+                p_id = id,
+                p_nama = nama,
+                p_harga = harga,
+                p_satuan = satuan
+            )
+        )
     }
 
     suspend fun updateStokManual(produkId: String, tipe: String, qty: Int) {
-        val produk = getProdukById(produkId)
-        val stokBaru = if (tipe == "masuk") produk.stok + qty else produk.stok - qty
-        require(stokBaru >= 0) { "Stok tidak cukup, stok saat ini: ${produk.stok.toInt()}" }
-
-        val log = LogProdukInsert(
-            produkId = produkId,
-            refType = "manual",
-            refId = produkId,
-            tipe = tipe,
-            qty = qty
+        client.postgrest.rpc(
+            "update_stok_manual",
+            UpdateStokManualRequest(
+                p_produk_id = produkId,
+                p_tipe = tipe,
+                p_qty = qty
+            )
         )
-
-        client.from("log_produk").insert(log)
     }
 
     suspend fun toggleStatusProduk(id: String, statusSaatIni: String) {
-        val statusBaru = if (statusSaatIni == "aktif") "nonaktif" else "aktif"
-        client.from("produk").update(
-            {
-                set("status", statusBaru)
-                set("updated_at", "now()")
-            }
-        ) { filter { eq("id", id) } }
+        client.postgrest.rpc(
+            "toggle_status_produk",
+            ToggleStatusProdukRequest(p_id = id)
+        )
     }
 }

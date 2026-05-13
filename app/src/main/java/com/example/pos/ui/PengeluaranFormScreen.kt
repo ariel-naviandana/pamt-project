@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.pos.model.Kas
+import com.example.pos.model.KasSimple
 import com.example.pos.viewmodel.PengeluaranUiState
 import com.example.pos.viewmodel.PengeluaranViewModel
 
@@ -34,7 +34,7 @@ fun PengeluaranFormScreen(
 
     var deskripsi by remember { mutableStateOf("") }
     var nominal by remember { mutableStateOf("") }
-    var selectedKas by remember { mutableStateOf<Kas?>(null) }
+    var selectedKas by remember { mutableStateOf<KasSimple?>(null) }
     var kasDropdownExpanded by remember { mutableStateOf(false) }
 
     // Validasi

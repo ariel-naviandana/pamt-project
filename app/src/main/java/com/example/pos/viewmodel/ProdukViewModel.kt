@@ -23,24 +23,11 @@ class ProdukViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<ProdukUiState>(ProdukUiState.Idle)
     val uiState: StateFlow<ProdukUiState> = _uiState.asStateFlow()
 
-    // ── Role ──────────────────────────────────────────────────────────────
-    private val _userRole = MutableStateFlow("cashier")
-    val userRole: StateFlow<String> = _userRole.asStateFlow()
+    private var isAdmin: Boolean = false
 
-    init {
-        loadUserRole()
-    }
-
-    // ── ROLE ──────────────────────────────────────────────────────────────
-    private fun loadUserRole() {
-        viewModelScope.launch {
-            try {
-                _userRole.value = repository.getUserRole()
-            } catch (e: Exception) {
-                // Fallback ke cashier jika gagal, lebih aman
-                _userRole.value = "cashier"
-            }
-        }
+    fun init(isAdmin: Boolean) {
+        this.isAdmin = isAdmin
+        loadProduk()
     }
 
     // ── LIST ──────────────────────────────────────────────────────────────

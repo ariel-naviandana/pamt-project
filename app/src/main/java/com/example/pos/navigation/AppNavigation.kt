@@ -32,7 +32,6 @@ import com.example.pos.viewmodel.AuthUiState
 import com.example.pos.viewmodel.AuthViewModel
 import com.example.pos.viewmodel.KasViewModel
 import com.example.pos.viewmodel.PelangganViewModel
-import com.example.pos.viewmodel.PengeluaranViewModel
 
 @Composable
 fun AppNavigation(
@@ -70,6 +69,8 @@ fun MainNavHost(
     val email = authViewModel.email.collectAsStateWithLifecycle()
     val password = authViewModel.password.collectAsStateWithLifecycle()
     val uiState = authViewModel.uiState.collectAsStateWithLifecycle()
+
+    val userId = authViewModel.userProfile.value?.id ?: ""
 
     LaunchedEffect(uiState.value) {
         if (uiState.value is AuthUiState.Success) {
@@ -133,7 +134,7 @@ fun MainNavHost(
         // PRODUK SECTION
         // ══════════════════════════════════════════════════════════════════
         composable(Screen.ProdukList.route) {
-            ProdukListScreen(navController = navController)
+            ProdukListScreen(navController = navController, isAdmin = isAdmin)
         }
 
         composable(
@@ -147,7 +148,7 @@ fun MainNavHost(
             )
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")
-            ProdukFormScreen(navController = navController, produkId = id)
+            ProdukFormScreen(navController = navController, produkId = id, isAdmin = isAdmin)
         }
 
         composable(
@@ -155,7 +156,7 @@ fun MainNavHost(
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: return@composable
-            ProdukDetailScreen(navController = navController, produkId = id)
+            ProdukDetailScreen(navController = navController, produkId = id, isAdmin = isAdmin)
         }
 
         // ══════════════════════════════════════════════════════════════════
@@ -212,7 +213,8 @@ fun MainNavHost(
             PengeluaranDetailScreen(
                 navController = navController,
                 pengeluaranId = id,
-                isAdmin = isAdmin
+                isAdmin = isAdmin,
+                currentUserId = userId
             )
         }
 

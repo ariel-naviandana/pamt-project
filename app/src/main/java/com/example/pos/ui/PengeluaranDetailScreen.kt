@@ -25,6 +25,7 @@ fun PengeluaranDetailScreen(
     navController: NavController,
     pengeluaranId: String,
     isAdmin: Boolean,
+    currentUserId: String,
     vm: PengeluaranViewModel = viewModel()
 ) {
     val detailState by vm.detailState.collectAsStateWithLifecycle()
@@ -52,7 +53,7 @@ fun PengeluaranDetailScreen(
                     // Tombol edit hanya jika status draft
                     val pengeluaran = detailState.pengeluaran
                     if (pengeluaran != null && pengeluaran.status == "draft") {
-                        val isOwner = true // RLS sudah handle di backend
+                        val isOwner = pengeluaran.userId == currentUserId
                         if (isAdmin || isOwner) {
                             IconButton(onClick = {
                                 navController.navigate(

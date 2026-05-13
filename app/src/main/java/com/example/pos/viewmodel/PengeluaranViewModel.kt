@@ -41,7 +41,6 @@ class PengeluaranViewModel : ViewModel() {
                 val list = repository.getPengeluaranList(isAdmin)
                 _listState.value = PengeluaranListState(pengeluaranList = list)
             } catch (e: Exception) {
-                android.util.Log.e("PengeluaranVM", "Error: ${e.message}", e) // tambah ini
                 _listState.value = _listState.value.copy(
                     isLoading = false,
                     error = e.message ?: "Gagal memuat pengeluaran"
