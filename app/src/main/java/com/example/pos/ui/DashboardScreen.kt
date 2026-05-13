@@ -85,7 +85,7 @@ fun DashboardScreen(
 
             item {
                 DashboardMenuCard(
-                    title = "Kelola Pelanggan",
+                    title = "Pelanggan",
                     icon = Icons.Default.AccountBalanceWallet,
                     onClick = onNavigateToPelanggan
                 )

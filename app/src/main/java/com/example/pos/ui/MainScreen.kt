@@ -53,13 +53,13 @@ fun MainScreen(
     }
 
     val pageTitle = when {
-        currentRoute == BottomNavItem.Home.route -> "POS Dashboard"
+        currentRoute == BottomNavItem.Home.route -> "MyKasir Dashboard"
         currentRoute?.startsWith("produk") == true -> "Manajemen Produk"
         currentRoute?.startsWith("pengeluaran") == true -> "Manajemen Pengeluaran"
         currentRoute?.startsWith("pelanggan") == true -> "Manajemen Pelanggan"
         currentRoute == BottomNavItem.Kas.route -> "Manajemen Kas"
         currentRoute == BottomNavItem.Profile.route -> "Profile"
-        else -> "POS Dashboard"
+        else -> "MyKasir Dashboard"
     }
 
     // Agar ikon navbar tetap menyala saat masuk ke layar Detail/Form
