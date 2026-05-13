@@ -10,29 +10,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import com.example.pos.ui.AddEditPelangganScreen
-import com.example.pos.ui.DashboardScreen
-import com.example.pos.ui.KasScreen
 import com.example.pos.ui.LoginScreen
-import com.example.pos.ui.PelangganListScreen
-import com.example.pos.ui.PengeluaranDetailScreen
-import com.example.pos.ui.PengeluaranFormScreen
-import com.example.pos.ui.PengeluaranListScreen
-import com.example.pos.ui.ProdukDetailScreen
-import com.example.pos.ui.ProdukFormScreen
-import com.example.pos.ui.ProdukListScreen
+import com.example.pos.ui.MainScreen
 import com.example.pos.ui.RegisterScreen
 import com.example.pos.viewmodel.AuthCheckState
 import com.example.pos.viewmodel.AuthUiState
 import com.example.pos.viewmodel.AuthViewModel
-import com.example.pos.ui.MainScreen
-import com.example.pos.viewmodel.KasViewModel
-import com.example.pos.viewmodel.PelangganViewModel
 
 @Composable
 fun AppNavigation(
@@ -71,21 +57,17 @@ fun MainNavHost(
     authViewModel: AuthViewModel,
     startDestination: String
 ) {
-    val navController = rememberNavController()
+    // NavController Utama (Root)
+    val rootNavController = rememberNavController()
 
-    // Ambil profile untuk mendapatkan role user
     val userProfile by authViewModel.userProfile.collectAsStateWithLifecycle()
-    val isAdmin = userProfile?.role == "admin"
-
     val email = authViewModel.email.collectAsStateWithLifecycle()
     val password = authViewModel.password.collectAsStateWithLifecycle()
     val uiState = authViewModel.uiState.collectAsStateWithLifecycle()
 
-    val userId = authViewModel.userProfile.value?.id ?: ""
-
     LaunchedEffect(uiState.value) {
         if (uiState.value is AuthUiState.Success) {
-            navController.navigate(Screen.Main.route) {
+            rootNavController.navigate(Screen.Main.route) {
                 popUpTo(Screen.Login.route) { inclusive = true }
             }
             authViewModel.resetState()
@@ -93,12 +75,10 @@ fun MainNavHost(
     }
 
     NavHost(
-        navController = navController,
+        navController = rootNavController,
         startDestination = startDestination
     ) {
-        // ═════════════════════��════════════════════════════════════════════
-        // AUTH SECTION (Login & Register)
-        // ══════════════════════════════════════════════════════════════════
+        // ── AUTH SECTION ──
         composable(Screen.Login.route) {
             LoginScreen(
                 email = email.value,
@@ -107,7 +87,7 @@ fun MainNavHost(
                 onEmailChange = authViewModel::onEmailChange,
                 onPasswordChange = authViewModel::onPasswordChange,
                 onLoginClick = { authViewModel.login() },
-                onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                onNavigateToRegister = { rootNavController.navigate(Screen.Register.route) }
             )
         }
 
@@ -119,148 +99,20 @@ fun MainNavHost(
                 onEmailChange = authViewModel::onEmailChange,
                 onPasswordChange = authViewModel::onPasswordChange,
                 onRegisterClick = { authViewModel.register() },
-                onNavigateToLogin = { navController.popBackStack() }
+                onNavigateToLogin = { rootNavController.popBackStack() }
             )
         }
 
+        // ── MAIN SECTION (Membuka layar yang ada Bottom Nav-nya) ──
         composable(Screen.Main.route) {
-
             MainScreen(
                 userProfile = userProfile,
                 onLogoutClick = {
                     authViewModel.logout()
-
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0)
+                    rootNavController.navigate(Screen.Login.route) {
+                        popUpTo(0) // Bersihkan semua backstack saat logout
                     }
                 }
-            )
-        }
-
-        // ══════════════════════════════════════════════════════════════════
-        // PRODUK SECTION
-        // ══════════════════════════════════════════════════════════════════
-        composable(Screen.ProdukList.route) {
-            ProdukListScreen(navController = navController, isAdmin = isAdmin)
-        }
-
-        composable(
-            route = Screen.ProdukForm.routeWithArgs,
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
-            )
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id")
-            ProdukFormScreen(navController = navController, produkId = id, isAdmin = isAdmin)
-        }
-
-        composable(
-            route = Screen.ProdukDetail.route,
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                }
-            )
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: return@composable
-            ProdukDetailScreen(navController = navController, produkId = id, isAdmin = isAdmin)
-        }
-
-        // ══════════════════════════════════════════════════════════════════
-        // KAS SECTION
-        // ══════════════════════════════════════════════════════════════════
-        composable(Screen.Kas.route) {
-            val kasViewModel: KasViewModel = viewModel()
-            val role = userProfile?.role ?: "cashier"
-
-            // Trigger fetch data saat layar dibuka
-            LaunchedEffect(role) {
-                kasViewModel.fetchKas(role)
-            }
-
-            KasScreen(
-                viewModel = kasViewModel,
-                userRole = role,
-                onBackClick = { navController.popBackStack() }
-            )
-        }
-
-        // ══════════════════════════════════════════════════════════════════
-        // PENGELUARAN SECTION
-        // ══════════════════════════════════════════════════════════════════
-        composable(Screen.PengeluaranList.route) {
-            PengeluaranListScreen(
-                navController = navController,
-                isAdmin = isAdmin
-            )
-        }
-
-        composable(
-            route = Screen.PengeluaranForm.routeWithArgs,
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
-            )
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id")
-            PengeluaranFormScreen(
-                navController = navController,
-                pengeluaranId = id,
-                isAdmin = isAdmin
-            )
-        }
-
-        composable(
-            route = Screen.PengeluaranDetail.route,
-            arguments = listOf(navArgument("id") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: return@composable
-            PengeluaranDetailScreen(
-                navController = navController,
-                pengeluaranId = id,
-                isAdmin = isAdmin,
-                currentUserId = userId
-            )
-        }
-
-        // ══════════════════════════════════════════════════════════════════
-        // PELANGGAN SECTION
-        // ══════════════════════════════════════════════════════════════════
-        composable(Screen.PelangganList.route) {
-            val pelangganViewModel: PelangganViewModel = viewModel()
-
-            PelangganListScreen(
-                viewModel = pelangganViewModel,
-                onAddPelanggan = {
-                    navController.navigate(Screen.PelangganForm.createRoute())
-                },
-                onEditPelanggan = { pelanggan ->
-                    navController.navigate(Screen.PelangganForm.createEditRoute(pelanggan.id))
-                }
-            )
-        }
-
-        composable(
-            route = Screen.PelangganForm.routeWithArgs,
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
-            )
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id")
-            AddEditPelangganScreen(
-                navController = navController,
-                pelangganId = id
             )
         }
     }

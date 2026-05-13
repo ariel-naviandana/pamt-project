@@ -1,14 +1,11 @@
 package com.example.pos.ui
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,6 +16,7 @@ import com.example.pos.model.Profile
 import com.example.pos.navigation.BottomNavItem
 import com.example.pos.navigation.Screen
 import com.example.pos.viewmodel.KasViewModel
+import com.example.pos.viewmodel.PelangganViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,66 +24,61 @@ fun MainScreen(
     userProfile: Profile?,
     onLogoutClick: () -> Unit
 ) {
+    val bottomNavController = rememberNavController()
 
-    val navController = rememberNavController()
     val role = userProfile?.role ?: "cashier"
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Produk,
         BottomNavItem.Kas,
+        BottomNavItem.Pengeluaran,
+        BottomNavItem.Pelanggan,
         BottomNavItem.Profile
     )
 
-    val currentRoute =
-        navController.currentBackStackEntryAsState()
-            .value
-            ?.destination
-            ?.route
+    val currentRoute = bottomNavController.currentBackStackEntryAsState().value?.destination?.route
 
-    val pageTitle = when {
+    // Standarisasi Navigasi Tab (Agar Card dan Navbar sinkron)
+    fun navigateToTab(route: String) {
+        if (currentRoute == route) return
 
-        currentRoute == BottomNavItem.Home.route ->
-            "POS Dashboard"
-
-        currentRoute?.startsWith("produk") == true ->
-            "Manajemen Produk"
-
-        currentRoute == BottomNavItem.Kas.route ->
-            "Manajemen Kas"
-
-        currentRoute == BottomNavItem.Profile.route ->
-            "Profile"
-
-        else ->
-            "POS Dashboard"
+        bottomNavController.navigate(route) {
+            // Gunakan findStartDestination().id sesuai standar resmi Google
+            popUpTo(bottomNavController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 
+    val pageTitle = when {
+        currentRoute == BottomNavItem.Home.route -> "POS Dashboard"
+        currentRoute?.startsWith("produk") == true -> "Manajemen Produk"
+        currentRoute?.startsWith("pengeluaran") == true -> "Manajemen Pengeluaran"
+        currentRoute?.startsWith("pelanggan") == true -> "Manajemen Pelanggan"
+        currentRoute == BottomNavItem.Kas.route -> "Manajemen Kas"
+        currentRoute == BottomNavItem.Profile.route -> "Profile"
+        else -> "POS Dashboard"
+    }
+
+    // Agar ikon navbar tetap menyala saat masuk ke layar Detail/Form
     fun isSelected(itemRoute: String): Boolean {
         return when (itemRoute) {
-            BottomNavItem.Produk.route -> {
-                currentRoute?.startsWith("produk") == true
-            }
-
-            else -> {
-                currentRoute == itemRoute
-            }
+            BottomNavItem.Home.route -> currentRoute == BottomNavItem.Home.route
+            BottomNavItem.Produk.route -> currentRoute?.startsWith("produk") == true
+            BottomNavItem.Pengeluaran.route -> currentRoute?.startsWith("pengeluaran") == true
+            BottomNavItem.Pelanggan.route -> currentRoute?.startsWith("pelanggan") == true
+            else -> currentRoute == itemRoute
         }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(pageTitle)
-                }
-            )
+            TopAppBar(title = { Text(pageTitle) })
         },
         bottomBar = {
-            NavigationBar(
-
-                containerColor =
-                    MaterialTheme.colorScheme.surface
-            ) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 items.forEach { item ->
                     NavigationBarItem(
                         selected = isSelected(item.route),
@@ -94,133 +87,108 @@ fun MainScreen(
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         ),
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.title
-                            )
-                        },
-
-                        label = {
-                            Text(item.title)
-                        }
+                        // Cukup panggil fungsi yang sudah distandarisasi
+                        onClick = { navigateToTab(item.route) },
+                        icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
+                        label = { Text(item.title) }
                     )
                 }
             }
-        },
-
+        }
     ) { paddingValues ->
-        Surface(
-            modifier = Modifier.padding(paddingValues)
-        ) {
+        Surface(modifier = Modifier.padding(paddingValues)) {
             NavHost(
-                navController = navController,
+                navController = bottomNavController,
                 startDestination = BottomNavItem.Home.route
             ) {
 
-                // ───────────────── HOME ─────────────────
+                // ── HOME / DASHBOARD ──
                 composable(BottomNavItem.Home.route) {
-
                     DashboardScreen(
                         profile = userProfile,
-
-                        onNavigateToProduk = {
-                            navController.navigate(
-                                BottomNavItem.Produk.route
-                            )
-                        },
-
-                        onNavigateToKas = {
-                            navController.navigate(
-                                BottomNavItem.Kas.route
-                            )
-                        }
+                        onLogoutClick = onLogoutClick,
+                        // Gunakan fungsi navigateToTab pada klik Card agar sama dengan Navbar
+                        onNavigateToProduk = { navigateToTab(BottomNavItem.Produk.route) },
+                        onNavigateToKas = { navigateToTab(BottomNavItem.Kas.route) },
+                        onNavigateToPengeluaran = { navigateToTab(BottomNavItem.Pengeluaran.route) },
+                        onNavigateToPelanggan = { navigateToTab(BottomNavItem.Pelanggan.route) }
                     )
                 }
 
-                // ───────────────── PRODUK LIST ─────────────────
-
+                // ── PRODUK ──
                 composable(BottomNavItem.Produk.route) {
-
-                    ProdukListScreen(
-                        navController = navController
-                    )
+                    ProdukListScreen(navController = bottomNavController, isAdmin = role == "admin")
                 }
-
-                // ───────────────── PRODUK DETAIL ─────────────────
 
                 composable(
                     route = Screen.ProdukDetail.route,
-
-                    arguments = listOf(
-                        navArgument("id") {
-                            type = NavType.StringType
-                        }
-                    )
+                    arguments = listOf(navArgument("id") { type = NavType.StringType })
                 ) { backStackEntry ->
-
-                    val id =
-                        backStackEntry.arguments?.getString("id")
-                            ?: return@composable
-
-                    ProdukDetailScreen(
-                        navController = navController,
-                        produkId = id
-                    )
+                    val id = backStackEntry.arguments?.getString("id") ?: return@composable
+                    ProdukDetailScreen(navController = bottomNavController, produkId = id, isAdmin = role == "admin")
                 }
 
-                // ───────────────── PRODUK FORM ─────────────────
                 composable(
                     route = Screen.ProdukForm.routeWithArgs,
-
-                    arguments = listOf(
-                        navArgument("id") {
-                            type = NavType.StringType
-                            nullable = true
-                            defaultValue = null
-                        }
-                    )
+                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null })
                 ) { backStackEntry ->
-                    val id =
-                        backStackEntry.arguments?.getString("id")
-
-                    ProdukFormScreen(
-                        navController = navController,
-                        produkId = id
-                    )
+                    val id = backStackEntry.arguments?.getString("id")
+                    ProdukFormScreen(navController = bottomNavController, produkId = id, isAdmin = role == "admin")
                 }
 
-                // ───────────────── KAS ─────────────────
+                // ── KAS ──
                 composable(BottomNavItem.Kas.route) {
                     val kasViewModel: KasViewModel = viewModel()
-
-                    LaunchedEffect(role) {
-                        kasViewModel.fetchKas(role)
-                    }
-
+                    LaunchedEffect(role) { kasViewModel.fetchKas(role) }
                     KasScreen(
                         viewModel = kasViewModel,
                         userRole = role,
-                        onBackClick = { }
+                        onBackClick = { bottomNavController.popBackStack() }
                     )
                 }
 
-                // ───────────────── PROFILE ─────────────────
+                // ── PROFILE ──
                 composable(BottomNavItem.Profile.route) {
-                    ProfileScreen(
-                        profile = userProfile,
-                        onLogoutClick = onLogoutClick
+                    ProfileScreen(profile = userProfile, onLogoutClick = onLogoutClick)
+                }
+
+                // ── PENGELUARAN ──
+                composable(BottomNavItem.Pengeluaran.route) {
+                    PengeluaranListScreen(navController = bottomNavController, isAdmin = role == "admin")
+                }
+
+                composable(
+                    route = Screen.PengeluaranForm.routeWithArgs,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id")
+                    PengeluaranFormScreen(navController = bottomNavController, pengeluaranId = id, isAdmin = role == "admin")
+                }
+
+                composable(
+                    route = Screen.PengeluaranDetail.route,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id") ?: return@composable
+                    PengeluaranDetailScreen(navController = bottomNavController, pengeluaranId = id, isAdmin = role == "admin", currentUserId = userProfile?.id ?: "")
+                }
+
+                // ── PELANGGAN ──
+                composable(BottomNavItem.Pelanggan.route) {
+                    val pelangganViewModel: PelangganViewModel = viewModel()
+                    PelangganListScreen(
+                        viewModel = pelangganViewModel,
+                        onAddPelanggan = { bottomNavController.navigate(Screen.PelangganForm.createRoute()) },
+                        onEditPelanggan = { pelanggan -> bottomNavController.navigate(Screen.PelangganForm.createEditRoute(pelanggan.id)) }
                     )
+                }
+
+                composable(
+                    route = Screen.PelangganForm.routeWithArgs,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id")
+                    AddEditPelangganScreen(navController = bottomNavController, pelangganId = id)
                 }
             }
         }

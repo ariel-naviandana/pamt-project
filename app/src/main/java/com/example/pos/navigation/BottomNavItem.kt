@@ -28,6 +28,20 @@ sealed class BottomNavItem(
         Icons.Default.AccountBalanceWallet
     )
 
+    // ── Item Baru: Pengeluaran ──
+    object Pengeluaran : BottomNavItem(
+        route = "pengeluaran_list",
+        title = "Pengeluaran",
+        icon = Icons.Default.Receipt
+    )
+
+    // ── Item Baru: Pelanggan ──
+    object Pelanggan : BottomNavItem(
+        route = "pelanggan_list",
+        title = "Pelanggan",
+        icon = Icons.Default.People
+    )
+
     object Profile : BottomNavItem(
         "profile",
         "Profil",
