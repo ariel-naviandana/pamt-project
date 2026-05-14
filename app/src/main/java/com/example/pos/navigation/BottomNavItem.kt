@@ -47,4 +47,10 @@ sealed class BottomNavItem(
         "Profil",
         Icons.Default.Person
     )
+
+    object Penjualan : BottomNavItem(
+        route = "penjualan_list",
+        title = "Penjualan",
+        icon = Icons.Default.ShoppingCart
+    )
 }

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -21,8 +22,9 @@ fun DashboardScreen(
     onNavigateToProduk: () -> Unit,
     onNavigateToKas: () -> Unit,
     onLogoutClick: () -> Unit,
-    onNavigateToPengeluaran: () -> Unit,  // tambah ini
-    onNavigateToPelanggan: () -> Unit
+    onNavigateToPengeluaran: () -> Unit,
+    onNavigateToPelanggan: () -> Unit,
+    onNavigateToPenjualan: () -> Unit
 ) {
 
     val role = profile?.role ?: "cashier"
@@ -98,6 +100,14 @@ fun DashboardScreen(
                     title = "Pengeluaran",
                     icon = Icons.Default.Receipt,
                     onClick = onNavigateToPengeluaran
+                )
+            }
+
+            item {
+                DashboardMenuCard(
+                    title = "Penjualan",
+                    icon = Icons.Default.ShoppingCart,
+                    onClick = onNavigateToPenjualan
                 )
             }
         }

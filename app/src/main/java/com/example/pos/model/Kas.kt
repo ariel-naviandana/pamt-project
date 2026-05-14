@@ -38,3 +38,6 @@ data class UpdateKasRequest(
 data class KasIdRequest(
     val p_id: String
 )
+
+@Serializable
+data class GetKasListRequest(val p_role: String)

@@ -60,4 +60,15 @@ sealed class Screen(val route: String) {
         fun createEditRoute(id: String) = "pelanggan_form?id=$id"
         const val routeWithArgs = "pelanggan_form?id={id}"
     }
+
+    // ── Penjualan ──────────────────────────────────────────────────────────
+    object PenjualanList : Screen("penjualan_list")
+
+    object PenjualanForm : Screen("penjualan_form") {
+        fun createRoute() = "penjualan_form"
+    }
+
+    object PenjualanDetail : Screen("penjualan_detail/{id}") {
+        fun createRoute(id: String) = "penjualan_detail/$id"
+    }
 }
