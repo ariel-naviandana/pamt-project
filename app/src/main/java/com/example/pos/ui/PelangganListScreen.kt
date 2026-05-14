@@ -30,7 +30,12 @@ fun PelangganListScreen(
     Scaffold(
         topBar = { TopAppBar(title = { Text("Daftar Pelanggan") }) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddPelanggan) {
+            FloatingActionButton(
+                onClick = onAddPelanggan,
+                modifier = Modifier.offset(y = 8.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah")
             }
         }

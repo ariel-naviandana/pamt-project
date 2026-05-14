@@ -38,7 +38,10 @@ fun PengeluaranListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(Screen.PengeluaranForm.createRoute()) }
+                onClick = { navController.navigate(Screen.PengeluaranForm.createRoute()) },
+                modifier = Modifier.offset(y = 8.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah Pengeluaran")
             }

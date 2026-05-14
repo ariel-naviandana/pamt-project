@@ -40,7 +40,7 @@ fun KasListScreen(
             if (isAdmin) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.KasForm.createRoute()) },
-                    modifier = Modifier.offset(y = 16.dp),
+                    modifier = Modifier.offset(y = 8.dp),
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
