@@ -81,14 +81,6 @@ fun DashboardScreen(
 
             item {
                 DashboardMenuCard(
-                    title = "Kas",
-                    icon = Icons.Default.AccountBalanceWallet,
-                    onClick = onNavigateToKas
-                )
-            }
-
-            item {
-                DashboardMenuCard(
                     title = "Pelanggan",
                     icon = Icons.Default.People,
                     onClick = onNavigateToPelanggan

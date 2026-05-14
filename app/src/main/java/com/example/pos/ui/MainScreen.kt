@@ -29,11 +29,7 @@ fun MainScreen(
     val role = userProfile?.role ?: "cashier"
     val items = listOf(
         BottomNavItem.Home,
-        BottomNavItem.Produk,
         BottomNavItem.Kas,
-        BottomNavItem.Penjualan,
-        BottomNavItem.Pengeluaran,
-        BottomNavItem.Pelanggan,
         BottomNavItem.Profile
     )
 
