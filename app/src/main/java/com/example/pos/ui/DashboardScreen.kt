@@ -19,9 +19,8 @@ import com.example.pos.ui.components.DashboardMenuCard
 fun DashboardScreen(
     profile: Profile?,
     onNavigateToProduk: () -> Unit,
-    onNavigateToKas: () -> Unit,
     onLogoutClick: () -> Unit,
-    onNavigateToPengeluaran: () -> Unit,  // tambah ini
+    onNavigateToPengeluaran: () -> Unit,
     onNavigateToPelanggan: () -> Unit
 ) {
 
@@ -74,14 +73,6 @@ fun DashboardScreen(
                     title = "Produk",
                     icon = Icons.Default.Inventory2,
                     onClick = onNavigateToProduk
-                )
-            }
-
-            item {
-                DashboardMenuCard(
-                    title = "Kas",
-                    icon = Icons.Default.AccountBalanceWallet,
-                    onClick = onNavigateToKas
                 )
             }
 

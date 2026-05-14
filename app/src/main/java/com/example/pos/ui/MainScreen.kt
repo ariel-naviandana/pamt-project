@@ -29,10 +29,7 @@ fun MainScreen(
     val role = userProfile?.role ?: "cashier"
     val items = listOf(
         BottomNavItem.Home,
-        BottomNavItem.Produk,
         BottomNavItem.Kas,
-        BottomNavItem.Pengeluaran,
-        BottomNavItem.Pelanggan,
         BottomNavItem.Profile
     )
 
@@ -110,7 +107,6 @@ fun MainScreen(
                         onLogoutClick = onLogoutClick,
                         // Gunakan fungsi navigateToTab pada klik Card agar sama dengan Navbar
                         onNavigateToProduk = { navigateToTab(BottomNavItem.Produk.route) },
-                        onNavigateToKas = { navigateToTab(BottomNavItem.Kas.route) },
                         onNavigateToPengeluaran = { navigateToTab(BottomNavItem.Pengeluaran.route) },
                         onNavigateToPelanggan = { navigateToTab(BottomNavItem.Pelanggan.route) }
                     )
