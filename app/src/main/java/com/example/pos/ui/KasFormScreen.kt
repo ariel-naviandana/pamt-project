@@ -45,8 +45,7 @@ fun KasFormScreen(
     
     // State untuk Penyesuaian Saldo (Hanya mode Edit)
     var adjustmentNominal by remember { mutableStateOf("") }
-    var adjustmentType by remember { mutableStateOf("debit") } // 'debit' = tambah, 'kredit' = kurang
-
+    var adjustmentType by remember { mutableStateOf("debit") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     // Load initial data for edit
@@ -56,7 +55,7 @@ fun KasFormScreen(
         }
     }
 
-    // Success navigation
+    // Navigasi balik setelah sukses
     LaunchedEffect(uiState) {
         if (uiState is KasUiState.Success) {
             vm.resetUiState()
@@ -185,13 +184,27 @@ fun KasFormScreen(
                             selected = adjustmentType == "debit",
                             onClick = { adjustmentType = "debit" },
                             label = { Text("Tambah (Debit)") },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = adjustmentType == "debit",
+                                borderColor = MaterialTheme.colorScheme.outline,
+                                selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                selectedBorderWidth = 2.dp
+                            )
                         )
                         FilterChip(
                             selected = adjustmentType == "kredit",
                             onClick = { adjustmentType = "kredit" },
                             label = { Text("Kurang (Kredit)") },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = adjustmentType == "kredit",
+                                borderColor = MaterialTheme.colorScheme.outline,
+                                selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                selectedBorderWidth = 2.dp
+                            )
                         )
                     }
                 }
