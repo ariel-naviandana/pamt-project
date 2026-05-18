@@ -50,8 +50,6 @@ fun KasListScreen(
         }
     ) { paddingValues ->
         Box(modifier = Modifier
-            .padding(paddingValues)
-            .padding(horizontal = 20.dp)
             .fillMaxSize()) {
             
             if (listState.isLoading) {
@@ -76,7 +74,9 @@ fun KasListScreen(
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(
-                        top = 16.dp,
+                        start = 20.dp,
+                        end = 20.dp,
+                        top = 4.dp,
                         bottom = 120.dp
                     ),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
