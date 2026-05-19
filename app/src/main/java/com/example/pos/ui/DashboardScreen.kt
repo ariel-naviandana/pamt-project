@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Receipt
@@ -24,7 +24,8 @@ fun DashboardScreen(
     onLogoutClick: () -> Unit,
     onNavigateToPengeluaran: () -> Unit,
     onNavigateToPelanggan: () -> Unit,
-    onNavigateToPenjualan: () -> Unit
+    onNavigateToPenjualan: () -> Unit,
+    onNavigateToLaporan: () -> Unit // Parameter Baru
 ) {
 
     val role = profile?.role ?: "cashier"
@@ -38,18 +39,14 @@ fun DashboardScreen(
         ElevatedCard(
             modifier = Modifier.fillMaxWidth()
         ) {
-
             Column(
                 modifier = Modifier.padding(20.dp)
             ) {
-
                 Text(
                     text = "Halo, ${profile?.nama ?: "User"}",
                     style = MaterialTheme.typography.headlineSmall
                 )
-
                 Spacer(modifier = Modifier.height(8.dp))
-
                 Text(
                     text = "Role: ${role.uppercase()}"
                 )
@@ -100,6 +97,15 @@ fun DashboardScreen(
                     title = "Penjualan",
                     icon = Icons.Default.ShoppingCart,
                     onClick = onNavigateToPenjualan
+                )
+            }
+
+            // ── TOMBOL MENU : LAPORAN LABA RUGI ──
+            item {
+                DashboardMenuCard(
+                    title = "Laporan Laba Rugi",
+                    icon = Icons.Default.Analytics,
+                    onClick = onNavigateToLaporan
                 )
             }
         }

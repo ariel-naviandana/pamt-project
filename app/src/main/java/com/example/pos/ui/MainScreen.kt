@@ -57,6 +57,7 @@ fun MainScreen(
         currentRoute?.startsWith("kas") == true -> "Manajemen Kas"
         currentRoute == BottomNavItem.Profile.route -> "Profile"
         currentRoute?.startsWith("penjualan") == true -> "Manajemen Penjualan"
+        currentRoute == Screen.LaporanLabaRugi.route -> "Laporan Laba Rugi" // Judul Navbar Baru
         else -> "MyKasir Dashboard"
     }
 
@@ -107,12 +108,12 @@ fun MainScreen(
                     DashboardScreen(
                         profile = userProfile,
                         onLogoutClick = onLogoutClick,
-                        // Gunakan fungsi navigateToTab pada klik Card agar sama dengan Navbar
                         onNavigateToProduk = { navigateToTab(BottomNavItem.Produk.route) },
                         onNavigateToKas = { navigateToTab(BottomNavItem.Kas.route) },
                         onNavigateToPengeluaran = { navigateToTab(BottomNavItem.Pengeluaran.route) },
                         onNavigateToPelanggan = { navigateToTab(BottomNavItem.Pelanggan.route) },
                         onNavigateToPenjualan = { navigateToTab(BottomNavItem.Penjualan.route) },
+                        onNavigateToLaporan = { bottomNavController.navigate(Screen.LaporanLabaRugi.route) } // Rute Baru
                     )
                 }
 
@@ -205,6 +206,7 @@ fun MainScreen(
                     AddEditPelangganScreen(navController = bottomNavController, pelangganId = id)
                 }
 
+                // ── PENJUALAN ──
                 composable(BottomNavItem.Penjualan.route) {
                     PenjualanListScreen(
                         navController = bottomNavController,
@@ -227,7 +229,13 @@ fun MainScreen(
                 composable(Screen.PenjualanForm.route) {
                     PenjualanFormScreen(navController = bottomNavController)
                 }
+
+                // ── LAPORAN LABA RUGI (BARU) ──
+                composable(Screen.LaporanLabaRugi.route) {
+                    // Sementara kita arahkan ke teks kosong sampai LaporanScreen dibuat
+
+                    }
+                }
             }
         }
     }
-}
