@@ -13,29 +13,39 @@ import androidx.compose.ui.unit.dp
 fun DashboardMenuCard(
     title: String,
     icon: ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier // Tambahkan parameter modifier untuk fleksibilitas
 ) {
 
-    ElevatedCard(
-        onClick = onClick
+    // UBAH: Gunakan Card biasa dengan elevation 2.dp agar terlihat seperti kotak yang "timbul"
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface // Pastikan warnanya konsisten
+        )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp),
-
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Icon(
                 imageVector = icon,
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.size(32.dp), // Sedikit diperbesar agar lebih proporsional
+                tint = MaterialTheme.colorScheme.primary
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(title, textAlign = TextAlign.Center)
+            Text(
+                text = title,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium
+            )
         }
     }
 }
