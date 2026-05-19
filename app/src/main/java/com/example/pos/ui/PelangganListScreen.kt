@@ -9,9 +9,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pos.model.Pelanggan
 import com.example.pos.viewmodel.PelangganViewModel
 
@@ -22,7 +24,10 @@ fun PelangganListScreen(
     onAddPelanggan: () -> Unit,
     onEditPelanggan: (Pelanggan) -> Unit
 ) {
-    // Load data saat screen dibuka
+    // 1. Observasi UiState dari ViewModel
+    val uiState by viewModel.listState.collectAsStateWithLifecycle()
+
+    // Load data saat screen dibuka pertama kali
     LaunchedEffect(Unit) {
         viewModel.loadPelanggan()
     }
@@ -32,25 +37,31 @@ fun PelangganListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddPelanggan,
-                modifier = Modifier.offset(y = 8.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah")
             }
         }
     ) { padding ->
-        if (viewModel.isLoading && viewModel.pelangganList.isEmpty()) {
+        // 2. Gunakan status loading dan list data dari uiState
+        if (uiState.isLoading && uiState.pelangganList.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
+        } else if (uiState.errorMessage != null && uiState.pelangganList.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = uiState.errorMessage ?: "Terjadi kesalahan")
+            }
         } else {
             LazyColumn(
-                modifier = Modifier.padding(padding).fillMaxSize(),
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(viewModel.pelangganList) { pelanggan ->
+                items(uiState.pelangganList) { pelanggan ->
                     PelangganItem(pelanggan = pelanggan, onClick = { onEditPelanggan(pelanggan) })
                 }
             }
@@ -61,7 +72,9 @@ fun PelangganListScreen(
 @Composable
 fun PelangganItem(pelanggan: Pelanggan, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

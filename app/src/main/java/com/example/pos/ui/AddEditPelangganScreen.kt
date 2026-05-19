@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.pos.viewmodel.PelangganViewModel
@@ -19,9 +20,10 @@ fun AddEditPelangganScreen(
     pelangganId: String? = null,
     viewModel: PelangganViewModel = viewModel()
 ) {
-    // ════════════════════════════════════════════════════════════════════
-    // STATE FORM
-    // ════════════════════════════════════════════════════════════════════
+    // 1. Observasi Form UiState dari ViewModel
+    val uiState by viewModel.formState.collectAsStateWithLifecycle()
+
+    // STATE FORM LOKAL (Tetap dipertahankan agar pengetikan TextFields lancar)
     var nama by remember { mutableStateOf("") }
     var noHp by remember { mutableStateOf("") }
     var alamat by remember { mutableStateOf("") }
@@ -30,21 +32,16 @@ fun AddEditPelangganScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // ════════════════════════════════════════════════════════════════════
-    // ✅ LOAD DATA SAAT EDIT
-    // ════════════════════════════════════════════════════════════════════
+    // LOAD DATA UTK EDIT MODE
     LaunchedEffect(pelangganId) {
         if (pelangganId != null) {
-            // Load data dari repository berdasarkan ID
             viewModel.loadPelangganById(pelangganId)
         }
     }
 
-    // ════════════════════════════════════════════════════════════════════
-    // ✅ ISI FORM DENGAN DATA YANG DI-LOAD
-    // ════════════════════════════════════════════════════════════════════
-    LaunchedEffect(viewModel.selectedPelanggan) {
-        viewModel.selectedPelanggan?.let { pelanggan ->
+    // 2. SET VALUE FORM KETIKA DATA BERHASIL DI-LOAD DARI UISTATE
+    LaunchedEffect(uiState.selectedPelanggan) {
+        uiState.selectedPelanggan?.let { pelanggan ->
             nama = pelanggan.nama
             noHp = pelanggan.no_hp ?: ""
             alamat = pelanggan.alamat ?: ""
@@ -53,14 +50,11 @@ fun AddEditPelangganScreen(
         }
     }
 
-    // ═════════════════════���══════════════════════════════════════════════
-    // HANDLE STATUS MESSAGE
-    // ════════════════════════════════════════════════════════════════════
-    LaunchedEffect(viewModel.statusMessage) {
-        viewModel.statusMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            if (it.contains("berhasil")) {
-                // Jika berhasil, tunggu 1 detik baru kembali
+    // 3. HANDLE NOTIFIKASI DAN BACK NAVIGATION MENGGUNAKAN UISTATE STATUS
+    LaunchedEffect(uiState.statusMessage) {
+        uiState.statusMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            if (uiState.isSuccess) {
                 kotlinx.coroutines.delay(1000)
                 navController.popBackStack()
             }
@@ -72,9 +66,7 @@ fun AddEditPelangganScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = {
-                    Text(if (pelangganId == null) "Tambah Pelanggan" else "Edit Pelanggan")
-                },
+                title = { Text(if (pelangganId == null) "Tambah Pelanggan" else "Edit Pelanggan") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
@@ -83,18 +75,15 @@ fun AddEditPelangganScreen(
             )
         }
     ) { padding ->
-        if (viewModel.isLoading && viewModel.selectedPelanggan == null && pelangganId != null) {
-            // ── LOADING STATE ──
+        // 4. Kondisi Loading UI dari uiState
+        if (uiState.isLoading && uiState.selectedPelanggan == null && pelangganId != null) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
         } else {
-            // ── FORM CONTENT ──
             Column(
                 modifier = Modifier
                     .padding(padding)
@@ -102,55 +91,40 @@ fun AddEditPelangganScreen(
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // ════════════════════════════════════════════════════════════════════
-                // INPUT NAMA PELANGGAN
-                // ════════════════════════════════════════════════════════════════════
                 OutlinedTextField(
                     value = nama,
                     onValueChange = { nama = it },
                     label = { Text("Nama Pelanggan *") },
                     modifier = Modifier.fillMaxWidth(),
                     isError = nama.isEmpty(),
-                    enabled = !viewModel.isLoading
+                    enabled = !uiState.isLoading
                 )
 
-                // ════════════════════════════════════════════════════════════════════
-                // INPUT NO. TELP
-                // ════════════════════════════════════════════════════════════════════
                 OutlinedTextField(
                     value = noHp,
                     onValueChange = { noHp = it },
                     label = { Text("No. Telp *") },
                     modifier = Modifier.fillMaxWidth(),
                     isError = noHp.isEmpty(),
-                    enabled = !viewModel.isLoading
+                    enabled = !uiState.isLoading
                 )
 
-                // ════════════════════════════════════════════════════════════════════
-                // INPUT ALAMAT
-                // ════════════════════════════════════════════════════════════════════
                 OutlinedTextField(
                     value = alamat,
                     onValueChange = { alamat = it },
                     label = { Text("Alamat") },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !viewModel.isLoading
+                    enabled = !uiState.isLoading
                 )
 
-                // ════════════════════════════════════════════════════════════════════
-                // INPUT EMAIL
-                // ════════════════════════════════════════════════════════════════════
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !viewModel.isLoading
+                    enabled = !uiState.isLoading
                 )
 
-                // ════════════════════════════════════════════════════════════════════
-                // STATUS (HANYA UNTUK EDIT)
-                // ════════════════════════════════════════════════════════════════════
                 if (pelangganId != null) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -161,16 +135,13 @@ fun AddEditPelangganScreen(
                         Switch(
                             checked = status == "aktif",
                             onCheckedChange = { status = if (it) "aktif" else "nonaktif" },
-                            enabled = !viewModel.isLoading
+                            enabled = !uiState.isLoading
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // ════════════════════════════════════════════════════════════════════
-                // BUTTON SIMPAN
-                // ════════════════════════════════════════════════════════════════════
                 Button(
                     onClick = {
                         viewModel.upsertPelanggan(
@@ -183,9 +154,9 @@ fun AddEditPelangganScreen(
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !viewModel.isLoading && nama.isNotEmpty() && noHp.isNotEmpty()
+                    enabled = !uiState.isLoading && nama.isNotEmpty() && noHp.isNotEmpty()
                 ) {
-                    if (viewModel.isLoading) {
+                    if (uiState.isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
@@ -198,13 +169,10 @@ fun AddEditPelangganScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // ════════════════════════════════════════════════════════════════════
-                // BUTTON BATAL
-                // ════════════════════════════════════════════════════════════════════
                 OutlinedButton(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !viewModel.isLoading
+                    enabled = !uiState.isLoading
                 ) {
                     Text("Batal")
                 }

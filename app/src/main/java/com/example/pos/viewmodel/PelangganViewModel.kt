@@ -1,77 +1,70 @@
 package com.example.pos.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pos.model.CreatePelangganRequest
 import com.example.pos.model.Pelanggan
 import com.example.pos.model.UpdatePelangganRequest
 import com.example.pos.repository.PelangganRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PelangganViewModel(
     private val repository: PelangganRepository = PelangganRepository()
 ) : ViewModel() {
 
-    var isLoading by mutableStateOf(false)
-    var statusMessage by mutableStateOf<String?>(null)
+    // Backing properties untuk StateFlow internal (Mutable)
+    private val _listState = MutableStateFlow(PelangganListUiState())
+    val listState: StateFlow<PelangganListUiState> = _listState.asStateFlow()
+
+    private val _formState = MutableStateFlow(PelangganFormUiState())
+    val formState: StateFlow<PelangganFormUiState> = _formState.asStateFlow()
 
     // ════════════════════════════════════════════════════════════════════
-    // State untuk List Pelanggan
-    // ════════════════════════════════════════════════════════════════════
-    private val _pelangganList = mutableStateListOf<Pelanggan>()
-    val pelangganList: List<Pelanggan> get() = _pelangganList
-
-    // ════════════════════════════════════════════════════════════════════
-    // State untuk Single Pelanggan (saat edit)
-    // ════════════════════════════════════════════════════════════════════
-    var selectedPelanggan by mutableStateOf<Pelanggan?>(null)
-
-    // ════════════════════════════════════════════════════════════════════
-    // Fungsi Load Data Pelanggan (List)
+    // FUNGSI UNTUK HALAMAN DAFTAR PELANGGAN
     // ════════════════════════════════════════════════════════════════════
     fun loadPelanggan() {
         viewModelScope.launch {
-            isLoading = true
+            _listState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val data = repository.fetchPelanggan()
-                _pelangganList.clear()
-                _pelangganList.addAll(data)
-                statusMessage = null // Clear message jika berhasil
+                val result = repository.fetchPelanggan()
+                _listState.update { it.copy(isLoading = false, pelangganList = result) }
             } catch (e: Exception) {
-                statusMessage = "❌ Gagal memuat data: ${e.message}"
-            } finally {
-                isLoading = false
+                _listState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = e.localizedMessage ?: "Gagal memuat data pelanggan"
+                    )
+                }
             }
         }
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Fungsi Load Data Pelanggan Berdasarkan ID (untuk Edit)
+    // FUNGSI UNTUK FORM (LOAD DATA PELANGGAN BY ID SAAT EDIT)
     // ════════════════════════════════════════════════════════════════════
     fun loadPelangganById(id: String) {
         viewModelScope.launch {
-            isLoading = true
+            _formState.update { it.copy(isLoading = true, statusMessage = null) }
             try {
-                val data = repository.fetchPelangganById(id)
-                selectedPelanggan = data
-                if (data == null) {
-                    statusMessage = "❌ Pelanggan tidak ditemukan"
-                }
+                val pelanggan = repository.fetchPelangganById(id)
+                _formState.update { it.copy(isLoading = false, selectedPelanggan = pelanggan) }
             } catch (e: Exception) {
-                statusMessage = "❌ Gagal memuat data: ${e.message}"
-                selectedPelanggan = null
-            } finally {
-                isLoading = false
+                _formState.update {
+                    it.copy(
+                        isLoading = false,
+                        statusMessage = "❌ Gagal memuat data: ${e.localizedMessage}"
+                    )
+                }
             }
         }
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Fungsi Tambah/Update Pelanggan (Upsert)
+    // FUNGSI SIMPAN/UPDATE PELANGGAN (UPSERT)
     // ════════════════════════════════════════════════════════════════════
     fun upsertPelanggan(
         id: String? = null,
@@ -82,7 +75,7 @@ class PelangganViewModel(
         status: String = "aktif"
     ) {
         viewModelScope.launch {
-            isLoading = true
+            _formState.update { it.copy(isLoading = true, statusMessage = null, isSuccess = false) }
             try {
                 if (id == null) {
                     // ── TAMBAH PELANGGAN BARU ──
@@ -94,11 +87,15 @@ class PelangganViewModel(
                             p_email = email.ifEmpty { null }
                         )
                     )
-                    statusMessage = "✅ Pelanggan berhasil ditambahkan"
-                    // Reload list setelah tambah
-                    loadPelanggan()
+                    _formState.update {
+                        it.copy(
+                            isLoading = false,
+                            statusMessage = "✅ Pelanggan berhasil ditambahkan",
+                            isSuccess = true
+                        )
+                    }
                 } else {
-                    // ── UPDATE PELANGGAN YANG SUDAH ADA ──
+                    // ── UPDATE DATA PELANGGAN EXISTING ──
                     repository.updatePelanggan(
                         UpdatePelangganRequest(
                             p_id = id,
@@ -109,22 +106,28 @@ class PelangganViewModel(
                             p_status = status
                         )
                     )
-                    statusMessage = "✅ Pelanggan berhasil diperbarui"
-                    // Reload list setelah update
-                    loadPelanggan()
+                    _formState.update {
+                        it.copy(
+                            isLoading = false,
+                            statusMessage = "✅ Pelanggan berhasil diperbarui",
+                            isSuccess = true
+                        )
+                    }
                 }
             } catch (e: Exception) {
-                statusMessage = "❌ Gagal: ${e.message}"
-            } finally {
-                isLoading = false
+                _formState.update {
+                    it.copy(
+                        isLoading = false,
+                        statusMessage = "❌ Gagal menyimpan: ${e.localizedMessage}",
+                        isSuccess = false
+                    )
+                }
             }
         }
     }
 
-    // ════════════════════════════════════════════════════════════════════
-    // Fungsi Clear Message
-    // ════════════════════════════════════════════════════════════════════
+    // Reset status message setelah ditampilkan ke layar
     fun clearMessage() {
-        statusMessage = null
+        _formState.update { it.copy(statusMessage = null) }
     }
 }
