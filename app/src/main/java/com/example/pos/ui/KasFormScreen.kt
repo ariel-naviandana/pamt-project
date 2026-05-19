@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -20,7 +21,6 @@ import androidx.navigation.NavController
 import com.example.pos.viewmodel.KasUiState
 import com.example.pos.viewmodel.KasViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KasFormScreen(
     navController: NavController,
@@ -40,18 +40,25 @@ fun KasFormScreen(
         listState.kasList.find { it.id == kasId }
     }
 
-    var nama by remember { mutableStateOf("") }
-    var saldoInitial by remember { mutableStateOf("") }
-    
-    // State untuk Penyesuaian Saldo (Hanya mode Edit)
-    var adjustmentNominal by remember { mutableStateOf("") }
-    var adjustmentType by remember { mutableStateOf("debit") }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
+    // Mengubah remember menjadi rememberSaveable agar state aman saat rotasi layar
+    var nama by rememberSaveable { mutableStateOf("") }
+    var saldoInitial by rememberSaveable { mutableStateOf("") }
 
-    // Load initial data for edit
+    // State untuk Penyesuaian Saldo (Hanya mode Edit)
+    var adjustmentNominal by rememberSaveable { mutableStateOf("") }
+    var adjustmentType by rememberSaveable { mutableStateOf("debit") }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
+
+    // GEMBOK PENANDA: Mengunci pengisian data awal agar tidak menimpa input baru saat rotasi layar
+    var isInitialized by rememberSaveable { mutableStateOf(false) }
+
+    // Load initial data untuk mode edit (Diproteksi oleh gembok isInitialized)
     LaunchedEffect(kasToEdit) {
         kasToEdit?.let {
-            nama = it.nama
+            if (isEdit && !isInitialized) {
+                nama = it.nama
+                isInitialized = true // Kunci dinyalakan setelah data pertama kali dimuat
+            }
         }
     }
 
@@ -63,6 +70,7 @@ fun KasFormScreen(
         }
     }
 
+    // Dialog Konfirmasi Hapus ditempatkan aman di level utama container
     if (showDeleteConfirm && kasToEdit != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
@@ -70,7 +78,7 @@ fun KasFormScreen(
             text = { Text("Apakah Anda yakin ingin menonaktifkan '${kasToEdit.nama}'? Kasir tidak akan dapat melihat atau menggunakan kas ini.") },
             confirmButton = {
                 Button(
-                    onClick = { 
+                    onClick = {
                         vm.deleteKas(kasToEdit.id)
                         showDeleteConfirm = false
                     },
@@ -83,51 +91,62 @@ fun KasFormScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (isEdit) "Edit Kas" else "Tambah Kas") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
-                    }
-                },
-                actions = {
-                    if (isEdit && kasToEdit?.status != "nonaktif" && kasToEdit != null) {
-                        IconButton(onClick = { showDeleteConfirm = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Nonaktifkan", tint = MaterialTheme.colorScheme.error)
-                        }
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    // Mengganti Scaffold dengan Box sebagai container utama aplikasi agar bebas scroll saat landscape
+    Box(modifier = Modifier.fillMaxSize()) {
         if (isEdit && kasToEdit == null && listState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else if (isEdit && kasToEdit == null && !listState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Data kas tidak ditemukan")
-            }
+            Text("Data kas tidak ditemukan", modifier = Modifier.align(Alignment.Center))
         } else {
             Column(
                 modifier = Modifier
-                    .padding(padding)
-                    .padding(16.dp)
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()), // Membuat seluruh halaman beserta header bisa di-scroll saat landscape
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // CUSTOM HEADER (Menggantikan TopAppBar bawaan Scaffold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.offset(x = (-12).dp) // Meratakan posisi dengan form di bawahnya
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                    }
+                    Text(
+                        text = if (isEdit) "Edit Kas" else "Tambah Kas",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Tombol delete ditaruh di pojok kanan header custom
+                    if (isEdit && kasToEdit?.status != "nonaktif" && kasToEdit != null) {
+                        IconButton(onClick = { showDeleteConfirm = true }) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Nonaktifkan",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+
                 // ── SEKSI INFORMASI UMUM ──────────────────────────────────
                 Text("Informasi Kas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                
+
                 OutlinedTextField(
                     value = nama,
                     onValueChange = { nama = it },
                     label = { Text("Nama Kas") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    enabled = uiState !is KasUiState.Loading
                 )
 
                 if (!isEdit) {
@@ -137,7 +156,8 @@ fun KasFormScreen(
                         label = { Text("Saldo Awal") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = uiState !is KasUiState.Loading
                     )
                 } else {
                     // Tampilkan Saldo Saat Ini
@@ -173,7 +193,8 @@ fun KasFormScreen(
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
-                        placeholder = { Text("0") }
+                        placeholder = { Text("0") },
+                        enabled = uiState !is KasUiState.Loading
                     )
 
                     Row(
@@ -182,7 +203,7 @@ fun KasFormScreen(
                     ) {
                         FilterChip(
                             selected = adjustmentType == "debit",
-                            onClick = { adjustmentType = "debit" },
+                            onClick = { if (uiState !is KasUiState.Loading) adjustmentType = "debit" },
                             label = { Text("Tambah (Debit)") },
                             modifier = Modifier.weight(1f),
                             border = FilterChipDefaults.filterChipBorder(
@@ -195,7 +216,7 @@ fun KasFormScreen(
                         )
                         FilterChip(
                             selected = adjustmentType == "kredit",
-                            onClick = { adjustmentType = "kredit" },
+                            onClick = { if (uiState !is KasUiState.Loading) adjustmentType = "kredit" },
                             label = { Text("Kurang (Kredit)") },
                             modifier = Modifier.weight(1f),
                             border = FilterChipDefaults.filterChipBorder(
@@ -213,7 +234,8 @@ fun KasFormScreen(
                     Button(
                         onClick = { vm.activateKas(kasToEdit.id) },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        enabled = uiState !is KasUiState.Loading
                     ) {
                         Text("Aktifkan Kembali Kas Ini")
                     }
@@ -227,9 +249,9 @@ fun KasFormScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-                // ── TOMBOL AKSI ───────────────────────────────────────────
+                // ── TOMBOL AKSI SUBMIT ────────────────────────────────────
                 Button(
                     onClick = {
                         if (isEdit && kasId != null) {
@@ -250,12 +272,15 @@ fun KasFormScreen(
                     if (uiState is KasUiState.Loading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
                         Text(if (isEdit) "Simpan Perubahan" else "Tambah Kas")
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp)) // Jarak aman scroll paling bawah
             }
         }
     }
