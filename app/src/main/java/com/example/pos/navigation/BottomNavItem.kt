@@ -53,4 +53,10 @@ sealed class BottomNavItem(
         title = "Penjualan",
         icon = Icons.Default.ShoppingCart
     )
+
+    object Laporan : BottomNavItem(
+        route = "laporan_laba_rugi",
+        title = "Laporan Laba Rugi",
+        icon = Icons.Default.Analytics
+    )
 }

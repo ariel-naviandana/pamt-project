@@ -58,7 +58,7 @@ fun MainScreen(
         currentRoute?.startsWith("kas") == true -> "Manajemen Kas"
         currentRoute == BottomNavItem.Profile.route -> "Profile"
         currentRoute?.startsWith("penjualan") == true -> "Manajemen Penjualan"
-        currentRoute == Screen.LaporanLabaRugi.route -> "Laporan Laba Rugi" // Judul Navbar Baru
+        currentRoute ?.startsWith("laporan") == true -> "Laporan Laba Rugi"
         else -> "MyKasir Dashboard"
     }
 
@@ -71,6 +71,7 @@ fun MainScreen(
             BottomNavItem.Pelanggan.route -> currentRoute?.startsWith("pelanggan") == true
             BottomNavItem.Kas.route -> currentRoute?.startsWith("kas") == true
             BottomNavItem.Penjualan.route -> currentRoute?.startsWith("penjualan") == true
+            BottomNavItem.Laporan.route -> currentRoute?.startsWith("laporan") == true
             else -> currentRoute == itemRoute
         }
     }
@@ -114,7 +115,7 @@ fun MainScreen(
                         onNavigateToPengeluaran = { navigateToTab(BottomNavItem.Pengeluaran.route) },
                         onNavigateToPelanggan = { navigateToTab(BottomNavItem.Pelanggan.route) },
                         onNavigateToPenjualan = { navigateToTab(BottomNavItem.Penjualan.route) },
-                        onNavigateToLaporan = { bottomNavController.navigate(Screen.LaporanLabaRugi.route) } // Rute Baru
+                        onNavigateToLaporan = { navigateToTab(BottomNavItem.Laporan.route) } // Rute Baru
                     )
                 }
 
@@ -265,7 +266,7 @@ fun MainScreen(
                     PenjualanFormScreen(navController = bottomNavController)
                 }
                 // ── LAPORAN LABA RUGI ──
-                composable(Screen.LaporanLabaRugi.route) {
+                composable(BottomNavItem.Laporan.route) {
                     val laporanViewModel: com.example.pos.viewmodel.LaporanViewModel = viewModel()
                     val laporanUiState by laporanViewModel.uiState.collectAsStateWithLifecycle()
 
