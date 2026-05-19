@@ -33,7 +33,6 @@ fun PelangganListScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Daftar Pelanggan") }) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddPelanggan,
@@ -56,10 +55,14 @@ fun PelangganListScreen(
         } else {
             LazyColumn(
                 modifier = Modifier
-                    .padding(padding)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = 4.dp,
+                    bottom = 120.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(uiState.pelangganList) { pelanggan ->
                     PelangganItem(pelanggan = pelanggan, onClick = { onEditPelanggan(pelanggan) })

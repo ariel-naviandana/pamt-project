@@ -33,9 +33,6 @@ fun PengeluaranListScreen(
     LaunchedEffect(Unit) { vm.init(isAdmin) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Pengeluaran") })
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate(Screen.PengeluaranForm.createRoute()) },
@@ -49,7 +46,6 @@ fun PengeluaranListScreen(
     ) { padding ->
         Box(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
         ) {
             when {
@@ -85,8 +81,13 @@ fun PengeluaranListScreen(
 
                 else -> {
                     LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        contentPadding = PaddingValues(
+                            start = 20.dp,
+                            end = 20.dp,
+                            top = 4.dp,
+                            bottom = 120.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(
                             items = listState.pengeluaranList,
