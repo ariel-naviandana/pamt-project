@@ -1,16 +1,19 @@
 package com.example.pos.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,10 +25,7 @@ import com.example.pos.viewmodel.ProdukUiState
 import com.example.pos.viewmodel.ProdukViewModel
 import java.text.NumberFormat
 import java.util.Locale
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProdukDetailScreen(
     navController: NavController,
@@ -36,56 +36,35 @@ fun ProdukDetailScreen(
     val detailState by vm.detailState.collectAsStateWithLifecycle()
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
-    var showStokDialog by remember { mutableStateOf(false) }
-    var showToggleDialog by remember { mutableStateOf(false) }
+    // Menggunakan rememberSaveable agar status dialog aman saat rotasi layar
+    var showStokDialog by rememberSaveable { mutableStateOf(false) }
+    var showToggleDialog by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(produkId) { vm.loadDetail(produkId) }
+    val scrollState = rememberScrollState()
 
-    // Reset uiState setelah aksi berhasil
+    LaunchedEffect(produkId) {
+        vm.loadDetail(produkId)
+    }
+
     LaunchedEffect(uiState) {
         if (uiState is ProdukUiState.Success) vm.resetUiState()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Detail Produk") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
-                    }
-                },
-                actions = {
-                    // Tombol edit hanya untuk admin
-                    if (isAdmin) {
-                        IconButton(onClick = {
-                            navController.navigate(
-                                Screen.ProdukForm.createEditRoute(produkId)
-                            )
-                        }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit Produk")
-                        }
-                    }
-                }
-            )
-        }
-    ) { padding ->
-
+    // Mengganti Scaffold dengan Box sebagai container utama
+    Box(modifier = Modifier.fillMaxSize()) {
         when {
             detailState.isLoading -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
 
             detailState.error != null -> {
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxSize()) {
                     Column(
-                        modifier = Modifier.align(Alignment.Center),
+                        Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Gagal memuat detail produk")
+                        Text("Gagal memuat detail")
                         TextButton(onClick = { vm.loadDetail(produkId) }) {
                             Text("Coba Lagi")
                         }
@@ -94,123 +73,141 @@ fun ProdukDetailScreen(
             }
 
             detailState.produk != null -> {
-                val produk = detailState.produk!!
+                val p = detailState.produk!!
                 val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
 
-                LazyColumn(
+                Column(
                     modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                        .verticalScroll(scrollState), // Seluruh halaman detail bisa di-scroll dengan mulus
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // HEADER PENGGANTI TOP-APP-BAR
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    ) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.offset(x = (-12).dp) // Meratakan posisi ikon dengan konten
+                        ) {
+                            Icon(Icons.Default.ArrowBack, "Kembali")
+                        }
+                        Text(
+                            text = "Detail Produk",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        // Tombol edit hanya untuk admin
+                        if (isAdmin) {
+                            IconButton(onClick = {
+                                navController.navigate(Screen.ProdukForm.createEditRoute(produkId))
+                            }) {
+                                Icon(Icons.Default.Edit, "Edit")
+                            }
+                        }
+                    }
 
                     // ── Info Produk ───────────────────────────────────────
-                    item {
-                        InfoProdukCard(produk = produk, formatter = formatter)
-                    }
+                    InfoProdukCard(produk = p, formatter = formatter)
 
                     // ── Snackbar error aksi ───────────────────────────────
                     if (uiState is ProdukUiState.Error) {
-                        item {
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = (uiState as ProdukUiState.Error).message,
-                                    modifier = Modifier.padding(12.dp),
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = (uiState as ProdukUiState.Error).message,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(12.dp)
+                            )
                         }
                     }
 
                     // ── Tombol Aksi (hanya admin) ─────────────────────────
                     if (isAdmin) {
-                        item {
-                            AdminAksiRow(
-                                produk = produk,
-                                isLoading = uiState is ProdukUiState.Loading,
-                                onUbahStok = { showStokDialog = true },
-                                onToggleStatus = { showToggleDialog = true }
-                            )
-                        }
-                    }
-
-                    // ── Header Log ────────────────────────────────────────
-                    item {
-                        Text(
-                            text = "Histori Stok",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                        AdminAksiRow(
+                            produk = p,
+                            isLoading = uiState is ProdukUiState.Loading,
+                            onUbahStok = { showStokDialog = true },
+                            onToggleStatus = { showToggleDialog = true }
                         )
                     }
 
+                    // ── Header Log ────────────────────────────────────────
+                    Text(
+                        text = "Histori Stok",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
                     // ── Log Items ─────────────────────────────────────────
                     if (detailState.logList.isEmpty()) {
-                        item {
-                            Text(
-                                text = "Belum ada histori stok",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                        Text(
+                            text = "Belum ada histori stok",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     } else {
-                        items(
-                            items = detailState.logList,
-                            key = { it.id }
-                        ) { log ->
+                        // Menggunakan forEach karena kita berada di dalam Column yang sudah scrollable
+                        detailState.logList.forEach { log ->
                             LogProdukCard(log = log)
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp)) // Jarak aman paling bawah
                 }
             }
         }
-    }
 
-    // ── Dialog Ubah Stok ──────────────────────────────────────────────────
-    if (showStokDialog) {
-        StokDialog(
-            onDismiss = { showStokDialog = false },
-            onConfirm = { tipe, qty ->
-                vm.updateStokManual(produkId, tipe, qty)
-                showStokDialog = false
-            }
-        )
-    }
-
-    // ── Dialog Toggle Status ──────────────────────────────────────────────
-    if (showToggleDialog) {
-        val produk = detailState.produk
-        if (produk != null) {
-            AlertDialog(
-                onDismissRequest = { showToggleDialog = false },
-                title = { Text("Konfirmasi") },
-                text = {
-                    Text(
-                        "Yakin ingin ${
-                            if (produk.status == "aktif") "menonaktifkan" else "mengaktifkan"
-                        } produk \"${produk.nama}\"?"
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            vm.toggleStatusProduk(produkId, produk.status)
-                            showToggleDialog = false
-                        }
-                    ) { Text("Ya") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showToggleDialog = false }) {
-                        Text("Batal")
-                    }
+        // Dialog Ubah Stok placed safely at Box level
+        if (showStokDialog) {
+            StokDialog(
+                onDismiss = { showStokDialog = false },
+                onConfirm = { tipe, qty ->
+                    vm.updateStokManual(produkId, tipe, qty)
+                    showStokDialog = false
                 }
             )
+        }
+
+        // Dialog Toggle Status placed safely at Box level
+        if (showToggleDialog) {
+            val p = detailState.produk
+            if (p != null) {
+                AlertDialog(
+                    onDismissRequest = { showToggleDialog = false },
+                    title = { Text("Konfirmasi") },
+                    text = {
+                        Text(
+                            "Yakin ingin ${
+                                if (p.status == "aktif") "menonaktifkan" else "mengaktifkan"
+                            } produk \"${p.nama}\"?"
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                vm.toggleStatusProduk(produkId, p.status)
+                                showToggleDialog = false
+                            }
+                        ) { Text("Ya") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showToggleDialog = false }) { Text("Batal") }
+                    }
+                )
+            }
         }
     }
 }
@@ -218,19 +215,16 @@ fun ProdukDetailScreen(
 // ── Composable Helpers ────────────────────────────────────────────────────────
 
 @Composable
-private fun InfoProdukCard(
-    produk: Produk,
-    formatter: NumberFormat
-) {
+private fun InfoProdukCard(produk: Produk, formatter: NumberFormat) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = produk.nama,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             HorizontalDivider()
             InfoRow(label = "Harga", value = formatter.format(produk.harga))
@@ -296,9 +290,7 @@ private fun AdminAksiRow(
             modifier = Modifier.weight(1f),
             enabled = !isLoading,
             colors = if (produk.status == "aktif")
-                ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
+                ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
             else
                 ButtonDefaults.outlinedButtonColors()
         ) {
@@ -355,32 +347,23 @@ private fun StokDialog(
     onDismiss: () -> Unit,
     onConfirm: (tipe: String, qty: Int) -> Unit
 ) {
-    var tipe by remember { mutableStateOf("masuk") }
-    var qty by remember { mutableStateOf("") }
-    var qtyError by remember { mutableStateOf<String?>(null) }
+    var tipe by rememberSaveable { mutableStateOf("masuk") }
+    var qty by rememberSaveable { mutableStateOf("") }
+    var qtyError by rememberSaveable { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Ubah Stok Manual") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
-                // ── Pilih Tipe ────────────────────────────────────────────
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = tipe == "masuk",
-                        onClick = { tipe = "masuk" }
-                    )
+                    RadioButton(selected = tipe == "masuk", onClick = { tipe = "masuk" })
                     Text("Stok Masuk")
                     Spacer(modifier = Modifier.width(16.dp))
-                    RadioButton(
-                        selected = tipe == "keluar",
-                        onClick = { tipe = "keluar" }
-                    )
+                    RadioButton(selected = tipe == "keluar", onClick = { tipe = "keluar" })
                     Text("Stok Keluar")
                 }
 
-                // ── Input Jumlah ──────────────────────────────────────────
                 OutlinedTextField(
                     value = qty,
                     onValueChange = {
@@ -391,9 +374,7 @@ private fun StokDialog(
                     isError = qtyError != null,
                     supportingText = { if (qtyError != null) Text(qtyError!!) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number
-                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
             }

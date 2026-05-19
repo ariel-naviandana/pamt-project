@@ -8,7 +8,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -17,7 +20,6 @@ import androidx.navigation.NavController
 import com.example.pos.viewmodel.ProdukUiState
 import com.example.pos.viewmodel.ProdukViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProdukFormScreen(
     navController: NavController,
@@ -30,30 +32,36 @@ fun ProdukFormScreen(
 
     val isEdit = produkId != null
 
-    // State form lokal
-    var nama by remember { mutableStateOf("") }
-    var harga by remember { mutableStateOf("") }
-    var satuan by remember { mutableStateOf("") }
-    var stok by remember { mutableStateOf("") }
+    // Gunakan rememberSaveable untuk menyelamatkan input saat rotasi layar
+    var nama by rememberSaveable { mutableStateOf("") }
+    var harga by rememberSaveable { mutableStateOf("") }
+    var satuan by rememberSaveable { mutableStateOf("") }
+    var stok by rememberSaveable { mutableStateOf("") }
 
-    // Validasi
-    var namaError by remember { mutableStateOf<String?>(null) }
-    var hargaError by remember { mutableStateOf<String?>(null) }
-    var satuanError by remember { mutableStateOf<String?>(null) }
-    var stokError by remember { mutableStateOf<String?>(null) }
+    // Validasi State
+    var namaError by rememberSaveable { mutableStateOf<String?>(null) }
+    var hargaError by rememberSaveable { mutableStateOf<String?>(null) }
+    var satuanError by rememberSaveable { mutableStateOf<String?>(null) }
+    var stokError by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Load data jika mode edit
+    // GEMBOK PENANDA: Agar data lama tidak menimpa ketikan baru pasca rotasi screen
+    var isInitialized by rememberSaveable { mutableStateOf(false) }
+
+    // Load data awal
     LaunchedEffect(produkId) {
-        if (produkId != null) vm.loadDetail(produkId)
+        if (produkId != null && !isInitialized) {
+            vm.loadDetail(produkId)
+        }
     }
 
-    // Isi form saat data produk berhasil dimuat (mode edit)
+    // Isi form saat mode edit (Hanya dipicu sekali berkat filter gembok isInitialized)
     LaunchedEffect(detailState.produk) {
         detailState.produk?.let { p ->
-            if (isEdit) {
+            if (isEdit && !isInitialized) {
                 nama = p.nama
                 harga = p.harga.toInt().toString()
                 satuan = p.satuan
+                isInitialized = true // Kunci dinyalakan
             }
         }
     }
@@ -69,120 +77,129 @@ fun ProdukFormScreen(
     fun validate(): Boolean {
         var valid = true
 
-        namaError = if (nama.isBlank()) {
-            valid = false; "Nama produk tidak boleh kosong"
-        } else null
+        if (nama.isBlank()) {
+            valid = false; namaError = "Nama produk tidak boleh kosong"
+        } else {
+            namaError = null
+        }
 
-        hargaError = if (harga.isBlank()) {
-            valid = false; "Harga tidak boleh kosong"
-        } else if (harga.toDoubleOrNull() == null || harga.toDouble() < 0) {
-            valid = false; "Harga tidak valid"
-        } else null
+        val hargaDouble = harga.toDoubleOrNull()
+        if (harga.isBlank()) {
+            valid = false; hargaError = "Harga tidak boleh kosong"
+        } else if (hargaDouble == null) {
+            valid = false; hargaError = "Harga tidak valid"
+        } else if (hargaDouble < 0) {
+            valid = false; hargaError = "Harga tidak boleh minus"
+        } else {
+            hargaError = null
+        }
 
-        satuanError = if (satuan.isBlank()) {
-            valid = false; "Satuan tidak boleh kosong"
-        } else null
+        if (satuan.isBlank()) {
+            valid = false; satuanError = "Satuan tidak boleh kosong"
+        } else {
+            satuanError = null
+        }
 
         if (!isEdit) {
-            stokError = if (stok.isBlank()) {
-                valid = false; "Stok tidak boleh kosong"
-            } else if (stok.toDoubleOrNull() == null || stok.toDouble() < 0) {
-                valid = false; "Stok tidak valid"
-            } else null
+            val stokDouble = stok.toDoubleOrNull()
+            if (stok.isBlank()) {
+                valid = false; stokError = "Stok tidak boleh kosong"
+            } else if (stokDouble == null) {
+                valid = false; stokError = "Stok tidak valid"
+            } else if (stokDouble < 0) {
+                valid = false; stokError = "Stok tidak boleh minus"
+            } else {
+                stokError = null
+            }
         }
 
         return valid
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (isEdit) "Edit Produk" else "Tambah Produk") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    val scrollState = rememberScrollState()
+
+    // Menggunakan Box + Column verticalScroll menggantikan Scaffold TopBar
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 16.dp)
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // HEADER FORM
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.offset(x = (-12).dp)
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
+                }
+                Text(
+                    text = if (isEdit) "Edit Produk" else "Tambah Produk",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             // ── Nama ──────────────────────────────────────────────────────
             OutlinedTextField(
                 value = nama,
-                onValueChange = {
-                    nama = it
-                    namaError = null
-                },
+                onValueChange = { nama = it; namaError = null },
                 label = { Text("Nama Produk") },
                 isError = namaError != null,
-                supportingText = {
-                    if (namaError != null) Text(namaError!!)
-                },
+                supportingText = { if (namaError != null) Text(namaError!!) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                enabled = uiState !is ProdukUiState.Loading
             )
 
             // ── Harga ─────────────────────────────────────────────────────
             OutlinedTextField(
                 value = harga,
-                onValueChange = {
-                    harga = it
-                    hargaError = null
-                },
+                onValueChange = { harga = it; hargaError = null },
                 label = { Text("Harga (Rp)") },
                 isError = hargaError != null,
-                supportingText = {
-                    if (hargaError != null) Text(hargaError!!)
-                },
+                supportingText = { if (hargaError != null) Text(hargaError!!) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                enabled = uiState !is ProdukUiState.Loading
             )
 
             // ── Satuan ────────────────────────────────────────────────────
             OutlinedTextField(
                 value = satuan,
-                onValueChange = {
-                    satuan = it
-                    satuanError = null
-                },
-                label = { Text("Satuan (pcs, kg, lusin, dll)") },
+                onValueChange = { satuan = it; satuanError = null },
+                label = { Text("Satuan (pcs, kg, dll)") },
                 isError = satuanError != null,
-                supportingText = {
-                    if (satuanError != null) Text(satuanError!!)
-                },
+                supportingText = { if (satuanError != null) Text(satuanError!!) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                enabled = uiState !is ProdukUiState.Loading
             )
 
             // ── Stok Awal (hanya mode tambah) ─────────────────────────────
             if (!isEdit) {
                 OutlinedTextField(
                     value = stok,
-                    onValueChange = {
-                        stok = it
-                        stokError = null
-                    },
+                    onValueChange = { stok = it; stokError = null },
                     label = { Text("Stok Awal") },
                     isError = stokError != null,
-                    supportingText = {
-                        if (stokError != null) Text(stokError!!)
-                    },
+                    supportingText = { if (stokError != null) Text(stokError!!) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = uiState !is ProdukUiState.Loading
                 )
             }
 
-            // ── Error dari server ─────────────────────────────────────────
+            // ── Error server ──────────────────────────────────────────────
             if (uiState is ProdukUiState.Error) {
                 Text(
                     text = (uiState as ProdukUiState.Error).message,
@@ -193,7 +210,7 @@ fun ProdukFormScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // ── Tombol Submit ─────────────────────────────────────────────
+            // ── Submit Button ─────────────────────────────────────────────
             Button(
                 onClick = {
                     if (validate()) {
@@ -216,6 +233,8 @@ fun ProdukFormScreen(
                     Text(if (isEdit) "Simpan Perubahan" else "Tambah Produk")
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
