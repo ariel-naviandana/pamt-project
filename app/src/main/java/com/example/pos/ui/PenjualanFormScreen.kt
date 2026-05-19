@@ -28,6 +28,7 @@ import com.example.pos.viewmodel.PenjualanUiState
 import com.example.pos.viewmodel.PenjualanViewModel
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,19 +43,34 @@ fun PenjualanFormScreen(
     val activeDraftId by vm.activeDraftId.collectAsStateWithLifecycle()
 
     val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+    // 1. Pindahkan jumlahBayar ke atas sini dan gunakan rememberSaveable
+    var currentStep by rememberSaveable { mutableStateOf(1) }
+    var jumlahBayar by rememberSaveable { mutableStateOf("") }
 
-    var currentStep by remember { mutableStateOf(1) }
-    var selectedPelanggan by remember { mutableStateOf<Pelanggan?>(null) }
-    var selectedKas by remember { mutableStateOf<KasSimple?>(null) }
+    // 2. Simpan ID-nya saja agar aman di-save saat rotate
+    var selectedPelangganId by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedKasId by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // 3. Cari objek aslinya dari state berdasarkan ID yang disave
+    val selectedPelanggan = formState.pelangganList.find { it.id == selectedPelangganId }
+    val selectedKas = kasListState.kasList.find { it.id == selectedKasId }
+
     var pelangganExpanded by remember { mutableStateOf(false) }
     var kasExpanded by remember { mutableStateOf(false) }
+
     var showTambahItemDialog by remember { mutableStateOf(false) }
     var showSelesaikanDialog by remember { mutableStateOf(false) }
     var showBatalDialog by remember { mutableStateOf(false) }
 
+    // 4. Tambahkan isInitialized agar resetDraft() TIDAK terpanggil saat rotate
+    var isInitialized by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
-        vm.loadFormData()
-        vm.resetDraft()
+        if (!isInitialized) {
+            vm.loadFormData()
+            vm.resetDraft()
+            isInitialized = true
+        }
     }
 
     LaunchedEffect(activeDraftId) {
@@ -70,251 +86,155 @@ fun PenjualanFormScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Transaksi Baru") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (activeDraftId != null) showBatalDialog = true
-                        else navController.popBackStack()
-                    }) {
-                        Icon(Icons.Default.ArrowBack, "Kembali")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            // ── Step Indicator ────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                listOf("Pelanggan & Kas", "Item", "Bayar").forEachIndexed { index, label ->
-                    FilterChip(
-                        selected = currentStep == index + 1,
-                        onClick = {},
-                        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            HorizontalDivider()
-
-            when (currentStep) {
-
-                // ── STEP 1: Pilih Pelanggan & Kas ─────────────────────────
-                1 -> {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        // PEROMBAKAN UTAMA: Menghilangkan Column luar yang statis.
+        // Sekarang masing-masing step langsung menghandle Header & Step Indicator-nya sendiri agar bisa ikut ter-scroll.
+        when (currentStep) {
+            1 -> {
+                // ── STEP 1: Pilih Pelanggan & Kas ────────────────────────────────
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // HEADER DI DALAM SCROLL
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
                     ) {
-                        if (formState.isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                        IconButton(
+                            onClick = {
+                                if (activeDraftId != null) showBatalDialog = true
+                                else navController.popBackStack()
+                            },
+                            modifier = Modifier.offset(x = (-12).dp)
+                        ) {
+                            Icon(Icons.Default.ArrowBack, "Kembali")
+                        }
+                        Text(
+                            text = "Transaksi Baru",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // STEP INDICATOR DI DALAM SCROLL
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("Pelanggan & Kas", "Item", "Bayar").forEachIndexed { index, label ->
+                            FilterChip(
+                                selected = currentStep == index + 1,
+                                onClick = {},
+                                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                                modifier = Modifier.weight(1f)
                             )
-                        } else {
-                            // ── Dropdown Pelanggan ────────────────────────
-                            ExposedDropdownMenuBox(
-                                expanded = pelangganExpanded,
-                                onExpandedChange = { pelangganExpanded = it }
-                            ) {
-                                OutlinedTextField(
-                                    value = selectedPelanggan?.nama ?: "",
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("Pilih Pelanggan") },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(
-                                            expanded = pelangganExpanded
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                                )
-                                ExposedDropdownMenu(
-                                    expanded = pelangganExpanded,
-                                    onDismissRequest = { pelangganExpanded = false }
-                                ) {
-                                    if (formState.pelangganList.isEmpty()) {
-                                        DropdownMenuItem(
-                                            text = { Text("Tidak ada pelanggan aktif") },
-                                            onClick = {}
-                                        )
-                                    } else {
-                                        formState.pelangganList.forEach { pelanggan ->
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Column {
-                                                        Text(pelanggan.nama)
-                                                        Text(
-                                                            pelanggan.no_hp ?: "-",
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    }
-                                                },
-                                                onClick = {
-                                                    selectedPelanggan = pelanggan
-                                                    pelangganExpanded = false
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                        }
+                    }
+                    HorizontalDivider()
 
-                            // ── Dropdown Kas ──────────────────────────────
-                            ExposedDropdownMenuBox(
-                                expanded = kasExpanded,
-                                onExpandedChange = { kasExpanded = it }
-                            ) {
-                                OutlinedTextField(
-                                    value = selectedKas?.nama ?: "",
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("Pilih Kas") },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(
-                                            expanded = kasExpanded
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                                )
-                                ExposedDropdownMenu(
-                                    expanded = kasExpanded,
-                                    onDismissRequest = { kasExpanded = false }
-                                ) {
-                                    if (kasListState.isLoading) {
-                                        DropdownMenuItem(
-                                            text = { Text("Memuat kas...") },
-                                            onClick = {}
-                                        )
-                                    } else if (kasListState.kasList.isEmpty()) {
-                                        DropdownMenuItem(
-                                            text = { Text("Tidak ada kas aktif") },
-                                            onClick = {}
-                                        )
-                                    } else {
-                                        kasListState.kasList.forEach { kas ->
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Column {
-                                                        Text(kas.nama)
-                                                        Text(
-                                                            "Saldo: Rp ${kas.saldo?.toLong() ?: 0}",
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    }
-                                                },
-                                                onClick = {
-                                                    selectedKas = kas
-                                                    kasExpanded = false
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (uiState is PenjualanUiState.Error) {
-                                Text(
-                                    text = (uiState as PenjualanUiState.Error).message,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Button(
-                                onClick = {
-                                    val pelangganId = selectedPelanggan?.id ?: return@Button
-                                    val kasId = selectedKas?.id ?: return@Button
-                                    vm.createDraft(pelangganId, kasId)
+                    if (formState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    } else {
+                        // Dropdown Pelanggan
+                        ExposedDropdownMenuBox(
+                            expanded = pelangganExpanded,
+                            onExpandedChange = { pelangganExpanded = it }
+                        ) {
+                            OutlinedTextField(
+                                value = selectedPelanggan?.nama ?: "",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Pilih Pelanggan") },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = pelangganExpanded)
                                 },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = selectedPelanggan != null
-                                        && selectedKas != null
-                                        && uiState !is PenjualanUiState.Loading
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = pelangganExpanded,
+                                onDismissRequest = { pelangganExpanded = false }
                             ) {
-                                if (uiState is PenjualanUiState.Loading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(18.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.onPrimary
+                                if (formState.pelangganList.isEmpty()) {
+                                    DropdownMenuItem(
+                                        text = { Text("Tidak ada pelanggan aktif") },
+                                        onClick = {}
                                     )
                                 } else {
-                                    Text("Lanjut Pilih Item →")
+                                    formState.pelangganList.forEach { pelanggan ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Column {
+                                                    Text(pelanggan.nama)
+                                                    Text(
+                                                        pelanggan.no_hp ?: "-",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                selectedPelangganId = pelanggan.id // Simpan ID-nya, bukan objeknya
+                                                pelangganExpanded = false
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
-                }
 
-                // ── STEP 2: Tambah Item ────────────────────────────────────
-                2 -> {
-                    val penjualan = detailState.penjualan
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        LazyColumn(
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        // Dropdown Kas
+                        ExposedDropdownMenuBox(
+                            expanded = kasExpanded,
+                            onExpandedChange = { kasExpanded = it }
                         ) {
-                            if (penjualan?.items.isNullOrEmpty()) {
-                                item {
-                                    Text(
-                                        "Belum ada item, tambahkan produk",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                            OutlinedTextField(
+                                value = selectedKas?.nama ?: "",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Pilih Kas") },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = kasExpanded)
+                                },
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = kasExpanded,
+                                onDismissRequest = { kasExpanded = false }
+                            ) {
+                                if (kasListState.isLoading) {
+                                    DropdownMenuItem(
+                                        text = { Text("Memuat kas...") },
+                                        onClick = {}
                                     )
-                                }
-                            } else {
-                                items(
-                                    items = penjualan!!.items,
-                                    key = { it.id }
-                                ) { detail ->
-                                    Card(modifier = Modifier.fillMaxWidth()) {
-                                        Row(
-                                            modifier = Modifier
-                                                .padding(12.dp)
-                                                .fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    detail.produk?.nama ?: "-",
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                                Text(
-                                                    "${detail.qty} ${detail.produk?.satuan ?: ""} × ${formatter.format(detail.hargaSatuan)}",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                                Text(
-                                                    formatter.format(detail.subtotal),
-                                                    fontWeight = FontWeight.Bold
-                                                )
+                                } else if (kasListState.kasList.isEmpty()) {
+                                    DropdownMenuItem(
+                                        text = { Text("Tidak ada kas aktif") },
+                                        onClick = {}
+                                    )
+                                } else {
+                                    kasListState.kasList.forEach { kas ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Column {
+                                                    Text(kas.nama)
+                                                    Text(
+                                                        "Saldo: Rp ${kas.saldo?.toLong() ?: 0}",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                selectedKasId = kas.id // Simpan ID-nya
+                                                kasExpanded = false
                                             }
-                                            IconButton(onClick = { vm.removeItem(detail.id) }) {
-                                                Icon(
-                                                    Icons.Default.Delete,
-                                                    contentDescription = "Hapus",
-                                                    tint = MaterialTheme.colorScheme.error
-                                                )
-                                            }
-                                        }
+                                        )
                                     }
                                 }
                             }
@@ -323,167 +243,22 @@ fun PenjualanFormScreen(
                         if (uiState is PenjualanUiState.Error) {
                             Text(
                                 text = (uiState as PenjualanUiState.Error).message,
-                                modifier = Modifier.padding(horizontal = 16.dp),
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
 
-                        HorizontalDivider()
-
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Total", fontWeight = FontWeight.Bold)
-                                Text(
-                                    formatter.format(penjualan?.total ?: 0.0),
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                OutlinedButton(
-                                    onClick = { showTambahItemDialog = true },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(Icons.Default.Add, null)
-                                    Spacer(Modifier.width(4.dp))
-                                    Text("Tambah Item")
-                                }
-                                Button(
-                                    onClick = { currentStep = 3 },
-                                    modifier = Modifier.weight(1f),
-                                    enabled = !penjualan?.items.isNullOrEmpty()
-                                ) {
-                                    Text("Lanjut Bayar →")
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ── STEP 3: Bayar ──────────────────────────────────────────
-                3 -> {
-                    val penjualan = detailState.penjualan
-                    var jumlahBayar by remember { mutableStateOf("") }
-                    val total = penjualan?.total ?: 0.0
-                    val kembalian = (jumlahBayar.toDoubleOrNull() ?: 0.0) - total
-
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // ── Ringkasan ─────────────────────────────────────
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text("Ringkasan Transaksi", fontWeight = FontWeight.Bold)
-                                HorizontalDivider()
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Pelanggan")
-                                    Text(penjualan?.pelanggan?.nama ?: "-")
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Kas")
-                                    Text(penjualan?.kas?.nama ?: "-")
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Jumlah Item")
-                                    Text("${penjualan?.items?.size ?: 0} item")
-                                }
-                                HorizontalDivider()
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Total", fontWeight = FontWeight.Bold)
-                                    Text(
-                                        formatter.format(total),
-                                        fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                }
-                            }
-                        }
-
-                        // ── Input Bayar ───────────────────────────────────
-                        OutlinedTextField(
-                            value = jumlahBayar,
-                            onValueChange = { jumlahBayar = it },
-                            label = { Text("Jumlah Bayar") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            prefix = { Text("Rp ") }
-                        )
-
-                        // ── Kembalian ─────────────────────────────────────
-                        if (jumlahBayar.isNotBlank()) {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (kembalian >= 0)
-                                        MaterialTheme.colorScheme.primaryContainer
-                                    else
-                                        MaterialTheme.colorScheme.errorContainer
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        if (kembalian >= 0) "Kembalian" else "Kurang",
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        formatter.format(
-                                            if (kembalian >= 0) kembalian else -kembalian
-                                        ),
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-
-                        if (uiState is PenjualanUiState.Error) {
-                            Text(
-                                text = (uiState as PenjualanUiState.Error).message,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
                         Button(
-                            onClick = { showSelesaikanDialog = true },
+                            onClick = {
+                                val pelangganId = selectedPelanggan?.id ?: return@Button
+                                val kasId = selectedKas?.id ?: return@Button
+                                vm.createDraft(pelangganId, kasId)
+                            },
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = kembalian >= 0
-                                    && jumlahBayar.isNotBlank()
+                            enabled = selectedPelanggan != null
+                                    && selectedKas != null
                                     && uiState !is PenjualanUiState.Loading
                         ) {
                             if (uiState is PenjualanUiState.Loading) {
@@ -493,15 +268,339 @@ fun PenjualanFormScreen(
                                     color = MaterialTheme.colorScheme.onPrimary
                                 )
                             } else {
-                                Text("Selesaikan Transaksi")
+                                Text("Lanjut Pilih Item →")
                             }
                         }
-
-                        OutlinedButton(
-                            onClick = { currentStep = 2 },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("← Kembali ke Item") }
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
+                }
+            }
+
+            2 -> {
+                // ── STEP 2: Tambah Item ──────────────────────────────────────────
+                val penjualan = detailState.penjualan
+
+                // Menggunakan LazyColumn penuh agar seluruh elemen (Header sampai Tombol) bisa di-scroll bersamaan
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // HEADER SEBAGAI ITEM LAZYCOLUMN
+                    item {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    if (activeDraftId != null) showBatalDialog = true
+                                    else navController.popBackStack()
+                                },
+                                modifier = Modifier.offset(x = (-12).dp)
+                            ) {
+                                Icon(Icons.Default.ArrowBack, "Kembali")
+                            }
+                            Text(
+                                text = "Transaksi Baru",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // STEP INDICATOR SEBAGAI ITEM LAZYCOLUMN
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("Pelanggan & Kas", "Item", "Bayar").forEachIndexed { index, label ->
+                                FilterChip(
+                                    selected = currentStep == index + 1,
+                                    onClick = {},
+                                    label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+
+                    item { HorizontalDivider() }
+
+                    // List Item Penjualan
+                    if (penjualan?.items.isNullOrEmpty()) {
+                        item {
+                            Text(
+                                "Belum ada item, tambahkan produk",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                    } else {
+                        items(
+                            items = penjualan!!.items,
+                            key = { it.id }
+                        ) { detail ->
+                            Card(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            detail.produk?.nama ?: "-",
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            "${detail.qty} ${detail.produk?.satuan ?: ""} × ${formatter.format(detail.hargaSatuan)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            formatter.format(detail.subtotal),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    IconButton(onClick = { vm.removeItem(detail.id) }) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Hapus",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (uiState is PenjualanUiState.Error) {
+                        item {
+                            Text(
+                                text = (uiState as PenjualanUiState.Error).message,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    // SEKSI BAWAH (TOTAL & TOMBOL) DIMASUKKAN SEBAGAI ITEM AGAR IKUT TER-SCROLL SAAT LANDSCAPE
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Total", fontWeight = FontWeight.Bold)
+                            Text(
+                                formatter.format(penjualan?.total ?: 0.0),
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OutlinedButton(
+                                onClick = { showTambahItemDialog = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Add, null)
+                                Spacer(Modifier.width(4.dp))
+                                Text("Tambah Item")
+                            }
+                            Button(
+                                onClick = { currentStep = 3 },
+                                modifier = Modifier.weight(1f),
+                                enabled = !penjualan?.items.isNullOrEmpty()
+                            ) {
+                                Text("Lanjut Bayar →")
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                }
+            }
+
+            3 -> {
+                // ── STEP 3: Bayar ──────────────────────────────────────────
+                val penjualan = detailState.penjualan
+                var jumlahBayar by remember { mutableStateOf("") }
+                val total = penjualan?.total ?: 0.0
+                val kembalian = (jumlahBayar.toDoubleOrNull() ?: 0.0) - total
+
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // HEADER DI DALAM SCROLL
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                    ) {
+                        IconButton(
+                            onClick = {
+                                if (activeDraftId != null) showBatalDialog = true
+                                else navController.popBackStack()
+                            },
+                            modifier = Modifier.offset(x = (-12).dp)
+                        ) {
+                            Icon(Icons.Default.ArrowBack, "Kembali")
+                        }
+                        Text(
+                            text = "Transaksi Baru",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // STEP INDICATOR DI DALAM SCROLL
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("Pelanggan & Kas", "Item", "Bayar").forEachIndexed { index, label ->
+                            FilterChip(
+                                selected = currentStep == index + 1,
+                                onClick = {},
+                                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                    HorizontalDivider()
+
+                    // ── Ringkasan ─────────────────────────────────────
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("Ringkasan Transaksi", fontWeight = FontWeight.Bold)
+                            HorizontalDivider()
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Pelanggan")
+                                Text(penjualan?.pelanggan?.nama ?: "-")
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Kas")
+                                Text(penjualan?.kas?.nama ?: "-")
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Jumlah Item")
+                                Text("${penjualan?.items?.size ?: 0} item")
+                            }
+                            HorizontalDivider()
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Total", fontWeight = FontWeight.Bold)
+                                Text(
+                                    formatter.format(total),
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        }
+                    }
+
+                    // ── Input Bayar ───────────────────────────────────
+                    OutlinedTextField(
+                        value = jumlahBayar,
+                        onValueChange = { jumlahBayar = it },
+                        label = { Text("Jumlah Bayar") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        prefix = { Text("Rp ") }
+                    )
+
+                    // ── Kembalian ─────────────────────────────────────
+                    if (jumlahBayar.isNotBlank()) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (kembalian >= 0)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.errorContainer
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    if (kembalian >= 0) "Kembalian"
+                                    else "Kurang",
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    formatter.format(
+                                        if (kembalian >= 0) kembalian
+                                        else -kembalian
+                                    ),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    if (uiState is PenjualanUiState.Error) {
+                        Text(
+                            text = (uiState as PenjualanUiState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = { showSelesaikanDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = kembalian >= 0
+                                && jumlahBayar.isNotBlank()
+                                && uiState !is PenjualanUiState.Loading
+                    ) {
+                        if (uiState is PenjualanUiState.Loading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text("Selesaikan Transaksi")
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { currentStep = 2 },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("← Kembali ke Item") }
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
@@ -534,7 +633,8 @@ fun PenjualanFormScreen(
                 }) { Text("Ya, Selesaikan") }
             },
             dismissButton = {
-                TextButton(onClick = { showSelesaikanDialog = false }) { Text("Batal") }
+                TextButton(onClick = { showSelesaikanDialog = false })
+                { Text("Batal") }
             }
         )
     }
@@ -553,7 +653,8 @@ fun PenjualanFormScreen(
                 }) { Text("Ya, Batalkan") }
             },
             dismissButton = {
-                TextButton(onClick = { showBatalDialog = false }) { Text("Tidak") }
+                TextButton(onClick = { showBatalDialog = false })
+                { Text("Tidak") }
             }
         )
     }

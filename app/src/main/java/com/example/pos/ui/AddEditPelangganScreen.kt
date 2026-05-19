@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.pos.viewmodel.PelangganViewModel
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,28 +27,37 @@ fun AddEditPelangganScreen(
 ) {
     val uiState by viewModel.formState.collectAsStateWithLifecycle()
 
-    var nama by remember { mutableStateOf("") }
-    var noHp by remember { mutableStateOf("") }
-    var alamat by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf("aktif") }
+    var nama by rememberSaveable { mutableStateOf("") }
+    var noHp by rememberSaveable { mutableStateOf("") }
+    var alamat by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var status by rememberSaveable { mutableStateOf("aktif") }
+
+    // 1. BUAT GEMBOK PENANDA
+    var isInitialized by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
 
     LaunchedEffect(pelangganId) {
-        if (pelangganId != null) {
+        // 2. CEK GEMBOK: Jangan load data ulang dari server kalau cuma sekadar muter layar
+        if (pelangganId != null && !isInitialized) {
             viewModel.loadPelangganById(pelangganId)
         }
     }
 
     LaunchedEffect(uiState.selectedPelanggan) {
-        uiState.selectedPelanggan?.let { pelanggan ->
+        val pelanggan = uiState.selectedPelanggan
+        // 3. CEK GEMBOK: Hanya timpa form dengan data DB JIKA belum pernah diinisialisasi
+        if (pelanggan != null && !isInitialized) {
             nama = pelanggan.nama
             noHp = pelanggan.no_hp ?: ""
             alamat = pelanggan.alamat ?: ""
             email = pelanggan.email ?: ""
             status = pelanggan.status
+
+            // Kunci gemboknya! Sehingga saat rotate, kode ini tidak akan dijalankan lagi
+            isInitialized = true
         }
     }
 

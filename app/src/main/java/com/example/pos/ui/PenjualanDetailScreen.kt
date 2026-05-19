@@ -29,6 +29,7 @@ fun PenjualanDetailScreen(
 ) {
     val detailState by vm.detailState.collectAsStateWithLifecycle()
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+
     var showBatalDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(penjualanId) { vm.loadDetail(penjualanId) }
@@ -42,18 +43,8 @@ fun PenjualanDetailScreen(
 
     val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Detail Transaksi") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, "Kembali")
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    // MENGGANTI SCAFFOLD DENGAN BOX UTAMA
+    Box(modifier = Modifier.fillMaxSize()) {
         when {
             detailState.isLoading -> {
                 Box(Modifier.fillMaxSize()) {
@@ -80,16 +71,36 @@ fun PenjualanDetailScreen(
                 val p = detailState.penjualan!!
 
                 LazyColumn(
-                    modifier = Modifier.padding(padding).fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(), // Hapus padding bawaan Scaffold
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // ── Info Header ───────────────────────────────────────
+                    // HEADER KUSTOM (Pengganti TopAppBar)
+                    item {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        ) {
+                            IconButton(
+                                onClick = { navController.popBackStack() },
+                                modifier = Modifier.offset(x = (-12).dp)
+                            ) {
+                                Icon(Icons.Default.ArrowBack, "Kembali")
+                            }
+                            Text(
+                                text = "Detail Transaksi",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // ── Info Header ────────────────────────────────────────
                     item {
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column(
                                 modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
                                     p.kodeTransaksi,
@@ -111,7 +122,7 @@ fun PenjualanDetailScreen(
                         }
                     }
 
-                    // ── Error ─────────────────────────────────────────────
+                    // ── Error ──────────────────────────────────────────────
                     if (uiState is PenjualanUiState.Error) {
                         item {
                             Card(
@@ -130,7 +141,7 @@ fun PenjualanDetailScreen(
                         }
                     }
 
-                    // ── Tombol Batalkan ───────────────────────────────────
+                    // ── Tombol Batalkan ────────────────────────────────────
                     if (p.status == "draft" && isAdmin) {
                         item {
                             OutlinedButton(
@@ -144,7 +155,7 @@ fun PenjualanDetailScreen(
                         }
                     }
 
-                    // ── Header List Item ──────────────────────────────────
+                    // ── Header List Item ───────────────────────────────────
                     item {
                         Text(
                             "Item (${p.items.size})",
@@ -153,7 +164,7 @@ fun PenjualanDetailScreen(
                         )
                     }
 
-                    // ── List Item ─────────────────────────────────────────
+                    // ── List Item ──────────────────────────────────────────
                     if (p.items.isEmpty()) {
                         item {
                             Text(
@@ -171,7 +182,8 @@ fun PenjualanDetailScreen(
                             ) {
                                 Row(
                                     modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
@@ -195,23 +207,24 @@ fun PenjualanDetailScreen(
                 }
             }
         }
-    }
 
-    if (showBatalDialog) {
-        AlertDialog(
-            onDismissRequest = { showBatalDialog = false },
-            title = { Text("Batalkan Transaksi") },
-            text = { Text("Yakin ingin membatalkan transaksi ini?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    vm.batalkanPenjualan(penjualanId)
-                    showBatalDialog = false
-                }) { Text("Ya, Batalkan") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showBatalDialog = false }) { Text("Tidak") }
-            }
-        )
+        if (showBatalDialog) {
+            AlertDialog(
+                onDismissRequest = { showBatalDialog = false },
+                title = { Text("Batalkan Transaksi") },
+                text = { Text("Yakin ingin membatalkan transaksi ini?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        vm.batalkanPenjualan(penjualanId)
+                        showBatalDialog = false
+                    }) { Text("Ya, Batalkan") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBatalDialog = false })
+                    { Text("Tidak") }
+                }
+            )
+        }
     }
 }
 

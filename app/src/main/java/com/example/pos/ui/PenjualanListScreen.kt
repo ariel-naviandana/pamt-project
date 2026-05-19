@@ -35,7 +35,10 @@ fun PenjualanListScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(Screen.PenjualanForm.route) }
+                onClick = { navController.navigate(Screen.PenjualanForm.route) },
+                // change FAB color
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Transaksi Baru")
             }
