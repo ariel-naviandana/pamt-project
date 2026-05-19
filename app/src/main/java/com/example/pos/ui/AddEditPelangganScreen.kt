@@ -1,12 +1,15 @@
 package com.example.pos.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -18,12 +21,11 @@ import com.example.pos.viewmodel.PelangganViewModel
 fun AddEditPelangganScreen(
     navController: NavController,
     pelangganId: String? = null,
+    isAdmin: Boolean,
     viewModel: PelangganViewModel = viewModel()
 ) {
-    // 1. Observasi Form UiState dari ViewModel
     val uiState by viewModel.formState.collectAsStateWithLifecycle()
 
-    // STATE FORM LOKAL (Tetap dipertahankan agar pengetikan TextFields lancar)
     var nama by remember { mutableStateOf("") }
     var noHp by remember { mutableStateOf("") }
     var alamat by remember { mutableStateOf("") }
@@ -31,15 +33,14 @@ fun AddEditPelangganScreen(
     var status by remember { mutableStateOf("aktif") }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val scrollState = rememberScrollState()
 
-    // LOAD DATA UTK EDIT MODE
     LaunchedEffect(pelangganId) {
         if (pelangganId != null) {
             viewModel.loadPelangganById(pelangganId)
         }
     }
 
-    // 2. SET VALUE FORM KETIKA DATA BERHASIL DI-LOAD DARI UISTATE
     LaunchedEffect(uiState.selectedPelanggan) {
         uiState.selectedPelanggan?.let { pelanggan ->
             nama = pelanggan.nama
@@ -50,7 +51,6 @@ fun AddEditPelangganScreen(
         }
     }
 
-    // 3. HANDLE NOTIFIKASI DAN BACK NAVIGATION MENGGUNAKAN UISTATE STATUS
     LaunchedEffect(uiState.statusMessage) {
         uiState.statusMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
@@ -62,35 +62,40 @@ fun AddEditPelangganScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text(if (pelangganId == null) "Tambah Pelanggan" else "Edit Pelanggan") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        // 4. Kondisi Loading UI dari uiState
+    // PEROMBAKAN UTAMA: Mengganti Scaffold dengan Box sebagai container utama
+    Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.isLoading && uiState.selectedPelanggan == null && pelangganId != null) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else {
             Column(
                 modifier = Modifier
-                    .padding(padding)
-                    .padding(16.dp)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(scrollState), // Form bisa di-scroll dengan mulus
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // HEADER PENGGANTI TOP-APP-BAR BUKAAN SCAFFOLD
+                // Header ini akan ikut ter-scroll ke atas saat di landscape
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.offset(x = (-12).dp) // Geser sedikit agar rata kiri dengan form
+                    ) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
+                    }
+                    Text(
+                        text = if (pelangganId == null) "Tambah Pelanggan" else "Edit Pelanggan",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
                 OutlinedTextField(
                     value = nama,
                     onValueChange = { nama = it },
@@ -125,7 +130,7 @@ fun AddEditPelangganScreen(
                     enabled = !uiState.isLoading
                 )
 
-                if (pelangganId != null) {
+                if (pelangganId != null && isAdmin) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -140,7 +145,8 @@ fun AddEditPelangganScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                // Hapus weight(1f), ganti dengan height statis agar tidak crash di dalam verticalScroll
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
                     onClick = {
@@ -167,8 +173,6 @@ fun AddEditPelangganScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
                 OutlinedButton(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.fillMaxWidth(),
@@ -176,7 +180,15 @@ fun AddEditPelangganScreen(
                 ) {
                     Text("Batal")
                 }
+
+                Spacer(modifier = Modifier.height(24.dp)) // Jarak ekstra di bagian paling bawah
             }
         }
+
+        // Penempatan manual Snackbar di atas Box agar tetap muncul menggantikan fungsi bawaan Scaffold
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
+        )
     }
 }

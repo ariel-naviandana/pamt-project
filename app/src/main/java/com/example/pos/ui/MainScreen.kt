@@ -239,7 +239,11 @@ fun MainScreen(
                     })
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id")
-                    AddEditPelangganScreen(navController = bottomNavController, pelangganId = id)
+                    AddEditPelangganScreen(
+                        navController = bottomNavController,
+                        pelangganId = id,
+                        isAdmin = role == "admin"
+                    )
                 }
 
                 // ── PENJUALAN ──
