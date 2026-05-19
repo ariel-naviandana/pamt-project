@@ -55,7 +55,6 @@ fun AddEditPelangganScreen(
         uiState.statusMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             if (uiState.isSuccess) {
-                kotlinx.coroutines.delay(1000)
                 navController.popBackStack()
             }
             viewModel.clearMessage()
