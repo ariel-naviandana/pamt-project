@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -127,15 +128,25 @@ fun MainScreen(
                     arguments = listOf(navArgument("id") { type = NavType.StringType })
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id") ?: return@composable
-                    ProdukDetailScreen(navController = bottomNavController, produkId = id, isAdmin = role == "admin")
+                    ProdukDetailScreen(
+                        navController = bottomNavController,
+                        produkId = id,
+                        isAdmin = role == "admin"
+                    )
                 }
 
                 composable(
                     route = Screen.ProdukForm.routeWithArgs,
-                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null })
+                    arguments = listOf(navArgument("id") {
+                        type = NavType.StringType; nullable = true; defaultValue = null
+                    })
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id")
-                    ProdukFormScreen(navController = bottomNavController, produkId = id, isAdmin = role == "admin")
+                    ProdukFormScreen(
+                        navController = bottomNavController,
+                        produkId = id,
+                        isAdmin = role == "admin"
+                    )
                 }
 
                 // ── KAS ──────────────────────────────────────────────────────────
@@ -150,7 +161,9 @@ fun MainScreen(
 
                 composable(
                     route = Screen.KasForm.routeWithArgs,
-                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null })
+                    arguments = listOf(navArgument("id") {
+                        type = NavType.StringType; nullable = true; defaultValue = null
+                    })
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id")
                     val kasViewModel: KasViewModel = viewModel()
@@ -169,15 +182,24 @@ fun MainScreen(
 
                 // ── PENGELUARAN ──
                 composable(BottomNavItem.Pengeluaran.route) {
-                    PengeluaranListScreen(navController = bottomNavController, isAdmin = role == "admin")
+                    PengeluaranListScreen(
+                        navController = bottomNavController,
+                        isAdmin = role == "admin"
+                    )
                 }
 
                 composable(
                     route = Screen.PengeluaranForm.routeWithArgs,
-                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null })
+                    arguments = listOf(navArgument("id") {
+                        type = NavType.StringType; nullable = true; defaultValue = null
+                    })
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id")
-                    PengeluaranFormScreen(navController = bottomNavController, pengeluaranId = id, isAdmin = role == "admin")
+                    PengeluaranFormScreen(
+                        navController = bottomNavController,
+                        pengeluaranId = id,
+                        isAdmin = role == "admin"
+                    )
                 }
 
                 composable(
@@ -185,7 +207,12 @@ fun MainScreen(
                     arguments = listOf(navArgument("id") { type = NavType.StringType })
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id") ?: return@composable
-                    PengeluaranDetailScreen(navController = bottomNavController, pengeluaranId = id, isAdmin = role == "admin", currentUserId = userProfile?.id ?: "")
+                    PengeluaranDetailScreen(
+                        navController = bottomNavController,
+                        pengeluaranId = id,
+                        isAdmin = role == "admin",
+                        currentUserId = userProfile?.id ?: ""
+                    )
                 }
 
                 // ── PELANGGAN ──
@@ -194,13 +221,21 @@ fun MainScreen(
                     PelangganListScreen(
                         viewModel = pelangganViewModel,
                         onAddPelanggan = { bottomNavController.navigate(Screen.PelangganForm.createRoute()) },
-                        onEditPelanggan = { pelanggan -> bottomNavController.navigate(Screen.PelangganForm.createEditRoute(pelanggan.id)) }
+                        onEditPelanggan = { pelanggan ->
+                            bottomNavController.navigate(
+                                Screen.PelangganForm.createEditRoute(
+                                    pelanggan.id
+                                )
+                            )
+                        }
                     )
                 }
 
                 composable(
                     route = Screen.PelangganForm.routeWithArgs,
-                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null })
+                    arguments = listOf(navArgument("id") {
+                        type = NavType.StringType; nullable = true; defaultValue = null
+                    })
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id")
                     AddEditPelangganScreen(navController = bottomNavController, pelangganId = id)
@@ -229,13 +264,17 @@ fun MainScreen(
                 composable(Screen.PenjualanForm.route) {
                     PenjualanFormScreen(navController = bottomNavController)
                 }
-
-                // ── LAPORAN LABA RUGI (BARU) ──
+                // ── LAPORAN LABA RUGI ──
                 composable(Screen.LaporanLabaRugi.route) {
-                    // Sementara kita arahkan ke teks kosong sampai LaporanScreen dibuat
+                    val laporanViewModel: com.example.pos.viewmodel.LaporanViewModel = viewModel()
+                    val laporanUiState by laporanViewModel.uiState.collectAsStateWithLifecycle()
 
-                    }
+                    LaporanScreen(
+                        uiState = laporanUiState,
+                        onRefreshClick = { laporanViewModel.loadLaporan() }
+                    )
                 }
             }
         }
     }
+}
