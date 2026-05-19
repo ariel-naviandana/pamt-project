@@ -270,9 +270,20 @@ fun MainScreen(
                     val laporanViewModel: com.example.pos.viewmodel.LaporanViewModel = viewModel()
                     val laporanUiState by laporanViewModel.uiState.collectAsStateWithLifecycle()
 
+                    val uiState by laporanViewModel.uiState.collectAsState()
+                    val listFilter by laporanViewModel.listFilter.collectAsState()
+                    val filterTerpilih by laporanViewModel.filterTerpilih.collectAsState()
+
                     LaporanScreen(
-                        uiState = laporanUiState,
-                        onRefreshClick = { laporanViewModel.loadLaporan() }
+                        uiState = uiState,
+                        listFilter = listFilter,
+                        filterTerpilih = filterTerpilih,
+                        onFilterSelected = { filter ->
+                            laporanViewModel.loadLaporan(filter)
+                        },
+                        onRefreshClick = {
+                            laporanViewModel.loadLaporan(filterTerpilih)
+                        }
                     )
                 }
             }
