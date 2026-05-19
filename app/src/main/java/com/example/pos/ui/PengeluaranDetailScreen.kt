@@ -1,11 +1,14 @@
 package com.example.pos.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -31,48 +34,25 @@ fun PengeluaranDetailScreen(
     val detailState by vm.detailState.collectAsStateWithLifecycle()
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
-    var showApproveDialog by remember { mutableStateOf(false) }
-    var showBatalDialog by remember { mutableStateOf(false) }
+    // Menggunakan rememberSaveable agar status dialog aman saat rotasi layar
+    var showApproveDialog by rememberSaveable { mutableStateOf(false) }
+    var showBatalDialog by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(pengeluaranId) { vm.loadDetail(pengeluaranId) }
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(pengeluaranId) {
+        vm.loadDetail(pengeluaranId)
+    }
 
     LaunchedEffect(uiState) {
         if (uiState is PengeluaranUiState.Success) vm.resetUiState()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Detail Pengeluaran") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, "Kembali")
-                    }
-                },
-                actions = {
-                    // Tombol edit hanya jika status draft
-                    val pengeluaran = detailState.pengeluaran
-                    if (pengeluaran != null && pengeluaran.status == "draft") {
-                        val isOwner = pengeluaran.userId == currentUserId
-                        if (isAdmin || isOwner) {
-                            IconButton(onClick = {
-                                navController.navigate(
-                                    Screen.PengeluaranForm.createEditRoute(pengeluaranId)
-                                )
-                            }) {
-                                Icon(Icons.Default.Edit, "Edit")
-                            }
-                        }
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    // PEROMBAKAN UTAMA: Mengganti Scaffold dengan Box sebagai container utama
+    Box(modifier = Modifier.fillMaxSize()) {
         when {
             detailState.isLoading -> {
-                Box(Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(Modifier.align(Alignment.Center))
-                }
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
 
             detailState.error != null -> {
@@ -96,12 +76,48 @@ fun PengeluaranDetailScreen(
 
                 Column(
                     modifier = Modifier
-                        .padding(padding)
-                        .padding(16.dp)
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                        .verticalScroll(scrollState), // Seluruh halaman detail bisa di-scroll dengan mulus
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // ── Info Card ─────────────────────────────────────────
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // HEADER PENGGANTI TOP-APP-BAR BUKAAN SCAFFOLD
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    ) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.offset(x = (-12).dp) // Meratakan posisi ikon dengan konten
+                        ) {
+                            Icon(Icons.Default.ArrowBack, "Kembali")
+                        }
+                        Text(
+                            text = "Detail Pengeluaran",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        // Tombol edit hanya jika status draft
+                        if (p.status == "draft") {
+                            val isOwner = p.userId == currentUserId
+                            if (isAdmin || isOwner) {
+                                IconButton(onClick = {
+                                    navController.navigate(
+                                        Screen.PengeluaranForm.createEditRoute(pengeluaranId)
+                                    )
+                                }) {
+                                    Icon(Icons.Default.Edit, "Edit")
+                                }
+                            }
+                        }
+                    }
+
+                    // Info Card
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -121,7 +137,7 @@ fun PengeluaranDetailScreen(
                         }
                     }
 
-                    // ── Error aksi ────────────────────────────────────────
+                    // Error aksi
                     if (uiState is PengeluaranUiState.Error) {
                         Card(
                             colors = CardDefaults.cardColors(
@@ -131,14 +147,14 @@ fun PengeluaranDetailScreen(
                         ) {
                             Text(
                                 text = (uiState as PengeluaranUiState.Error).message,
-                                modifier = Modifier.padding(12.dp),
                                 color = MaterialTheme.colorScheme.onErrorContainer,
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(12.dp)
                             )
                         }
                     }
 
-                    // ── Tombol Aksi Admin ─────────────────────────────────
+                    // Tombol Aksi Admin
                     if (isAdmin && p.status == "draft") {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -151,7 +167,6 @@ fun PengeluaranDetailScreen(
                             ) {
                                 Text("Setujui")
                             }
-
                             OutlinedButton(
                                 onClick = { showBatalDialog = true },
                                 modifier = Modifier.weight(1f),
@@ -178,45 +193,47 @@ fun PengeluaranDetailScreen(
                             Text("Batalkan")
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp)) // Jarak aman paling bawah
                 }
             }
         }
-    }
 
-    // ── Dialog Approve ────────────────────────────────────────────────────
-    if (showApproveDialog) {
-        AlertDialog(
-            onDismissRequest = { showApproveDialog = false },
-            title = { Text("Setujui Pengeluaran") },
-            text = { Text("Pengeluaran akan diproses dan saldo kas akan berkurang. Lanjutkan?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    vm.approvePengeluaran(pengeluaranId)
-                    showApproveDialog = false
-                }) { Text("Ya, Setujui") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showApproveDialog = false }) { Text("Batal") }
-            }
-        )
-    }
+        // Dialog Approve placed safely at Box level
+        if (showApproveDialog) {
+            AlertDialog(
+                onDismissRequest = { showApproveDialog = false },
+                title = { Text("Setujui Pengeluaran") },
+                text = { Text("Pengeluaran akan diproses dan saldo kas akan berkurang. Lanjutkan?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        vm.approvePengeluaran(pengeluaranId)
+                        showApproveDialog = false
+                    }) { Text("Ya, Setujui") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showApproveDialog = false }) { Text("Batal") }
+                }
+            )
+        }
 
-    // ── Dialog Batalkan ───────────────────────────────────────────────────
-    if (showBatalDialog) {
-        AlertDialog(
-            onDismissRequest = { showBatalDialog = false },
-            title = { Text("Batalkan Pengeluaran") },
-            text = { Text("Yakin ingin membatalkan pengeluaran ini?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    vm.batalkanPengeluaran(pengeluaranId)
-                    showBatalDialog = false
-                }) { Text("Ya, Batalkan") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showBatalDialog = false }) { Text("Batal") }
-            }
-        )
+        // Dialog Batalkan placed safely at Box level
+        if (showBatalDialog) {
+            AlertDialog(
+                onDismissRequest = { showBatalDialog = false },
+                title = { Text("Batalkan Pengeluaran") },
+                text = { Text("Yakin ingin membatalkan pengeluaran ini?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        vm.batalkanPengeluaran(pengeluaranId)
+                        showBatalDialog = false
+                    }) { Text("Ya, Batalkan") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBatalDialog = false }) { Text("Batal") }
+                }
+            )
+        }
     }
 }
 
