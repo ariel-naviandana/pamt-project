@@ -56,6 +56,7 @@ fun MainScreen(
         currentRoute?.startsWith("pelanggan") == true -> "Manajemen Pelanggan"
         currentRoute?.startsWith("kas") == true -> "Manajemen Kas"
         currentRoute == BottomNavItem.Profile.route -> "Profile"
+        currentRoute?.startsWith("penjualan") == true -> "Manajemen Penjualan"
         else -> "MyKasir Dashboard"
     }
 
@@ -67,6 +68,7 @@ fun MainScreen(
             BottomNavItem.Pengeluaran.route -> currentRoute?.startsWith("pengeluaran") == true
             BottomNavItem.Pelanggan.route -> currentRoute?.startsWith("pelanggan") == true
             BottomNavItem.Kas.route -> currentRoute?.startsWith("kas") == true
+            BottomNavItem.Penjualan.route -> currentRoute?.startsWith("penjualan") == true
             else -> currentRoute == itemRoute
         }
     }
@@ -107,8 +109,10 @@ fun MainScreen(
                         onLogoutClick = onLogoutClick,
                         // Gunakan fungsi navigateToTab pada klik Card agar sama dengan Navbar
                         onNavigateToProduk = { navigateToTab(BottomNavItem.Produk.route) },
+                        onNavigateToKas = { navigateToTab(BottomNavItem.Kas.route) },
                         onNavigateToPengeluaran = { navigateToTab(BottomNavItem.Pengeluaran.route) },
-                        onNavigateToPelanggan = { navigateToTab(BottomNavItem.Pelanggan.route) }
+                        onNavigateToPelanggan = { navigateToTab(BottomNavItem.Pelanggan.route) },
+                        onNavigateToPenjualan = { navigateToTab(BottomNavItem.Penjualan.route) },
                     )
                 }
 
@@ -199,6 +203,29 @@ fun MainScreen(
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id")
                     AddEditPelangganScreen(navController = bottomNavController, pelangganId = id)
+                }
+
+                composable(BottomNavItem.Penjualan.route) {
+                    PenjualanListScreen(
+                        navController = bottomNavController,
+                        isAdmin = role == "admin"
+                    )
+                }
+
+                composable(
+                    route = Screen.PenjualanDetail.route,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id") ?: return@composable
+                    PenjualanDetailScreen(
+                        navController = bottomNavController,
+                        penjualanId = id,
+                        isAdmin = role == "admin"
+                    )
+                }
+
+                composable(Screen.PenjualanForm.route) {
+                    PenjualanFormScreen(navController = bottomNavController)
                 }
             }
         }
