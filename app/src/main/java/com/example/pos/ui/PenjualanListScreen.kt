@@ -46,7 +46,7 @@ fun PenjualanListScreen(
     ) { padding ->
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize().padding(padding)
         ) {
             when {
                 listState.isLoading -> {

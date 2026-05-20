@@ -55,7 +55,7 @@ fun ProdukListScreen(
     ) { padding ->
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize().padding(padding)
         ) {
             when {
                 listState.isLoading -> {
