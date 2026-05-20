@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import com.example.pos.model.PenjualanWithRelasi
 import com.example.pos.navigation.Screen
 import com.example.pos.viewmodel.PenjualanViewModel
+import com.example.pos.ui.theme.* // Import semua warna dari theme
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -36,7 +37,6 @@ fun PenjualanListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate(Screen.PenjualanForm.route) },
-                // change FAB color
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -115,15 +115,20 @@ private fun PenjualanCard(
     onClick: () -> Unit
 ) {
     val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+    val status = penjualan.status.lowercase()
 
-    val statusColor = when (penjualan.status) {
-        "selesai" -> MaterialTheme.colorScheme.primaryContainer
-        "dibatalkan" -> MaterialTheme.colorScheme.errorContainer
+    // Menggunakan warna custom yang lebih tegas
+    val statusColor = when (status) {
+        "selesai" -> ActiveStatusBg
+        "dibatalkan" -> InactiveStatusBg
+        "draft" -> DraftStatusBg
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
-    val statusTextColor = when (penjualan.status) {
-        "selesai" -> MaterialTheme.colorScheme.onPrimaryContainer
-        "dibatalkan" -> MaterialTheme.colorScheme.onErrorContainer
+
+    val statusTextColor = when (status) {
+        "selesai" -> White // Memakai putih murni agar lebih menonjol di latar hijau terang
+        "dibatalkan" -> InactiveStatusText
+        "draft" -> DraftStatusText
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -171,7 +176,7 @@ private fun PenjualanCard(
                 color = statusColor
             ) {
                 Text(
-                    text = penjualan.status,
+                    text = penjualan.status.uppercase(), // Di-uppercase agar mirip list Kas
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = statusTextColor

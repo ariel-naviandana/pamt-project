@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import com.example.pos.model.PengeluaranWithKas
 import com.example.pos.navigation.Screen
 import com.example.pos.viewmodel.PengeluaranViewModel
+import com.example.pos.ui.theme.* // Import semua warna dari theme
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -61,7 +62,7 @@ fun PengeluaranListScreen(
                     ) {
                         Text("Gagal memuat pengeluaran")
                         Text(
-                            text = listState.error ?: "",  // tambah ini
+                            text = listState.error ?: "",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -115,15 +116,19 @@ private fun PengeluaranCard(
     onClick: () -> Unit
 ) {
     val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+    val status = pengeluaran.status.lowercase()
 
-    val statusColor = when (pengeluaran.status) {
-        "disetujui" -> MaterialTheme.colorScheme.primaryContainer
-        "dibatalkan" -> MaterialTheme.colorScheme.errorContainer
+    val statusColor = when (status) {
+        "disetujui" -> ActiveStatusBg
+        "dibatalkan" -> InactiveStatusBg
+        "draft" -> DraftStatusBg
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
-    val statusTextColor = when (pengeluaran.status) {
-        "disetujui" -> MaterialTheme.colorScheme.onPrimaryContainer
-        "dibatalkan" -> MaterialTheme.colorScheme.onErrorContainer
+
+    val statusTextColor = when (status) {
+        "disetujui" -> White // Memakai putih murni
+        "dibatalkan" -> InactiveStatusText
+        "draft" -> DraftStatusText
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -173,7 +178,7 @@ private fun PengeluaranCard(
                 color = statusColor
             ) {
                 Text(
-                    text = pengeluaran.status,
+                    text = pengeluaran.status.uppercase(), // Di-uppercase agar seragam
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = statusTextColor

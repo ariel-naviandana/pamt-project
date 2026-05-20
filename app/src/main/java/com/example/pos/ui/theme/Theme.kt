@@ -29,7 +29,7 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color.Black,
     surface = White,
     onSurface = Color.Black,
-    surfaceVariant = Color(0xFFE8F5E9), // Card akan memiliki rona hijau sangat tipis (konsisten)
+    surfaceVariant = Color(0xFFE8F5E9),
     onSurfaceVariant = GreenDark,
     error = Color(0xFFB3261E),
     onError = White,
@@ -52,10 +52,15 @@ private val DarkColorScheme = darkColorScheme(
     onTertiaryContainer = White,
     background = Color(0xFF121212),
     onBackground = White,
-    surface = Color(0xFF131313),
+
+    // ── PERUBAHAN KONTRAS DARK MODE ──
+    // Diperterang dari 0xFF131313 agar Card lebih terlihat batasnya
+    surface = Color(0xFF1E1E1E),
     onSurface = White,
-    surfaceVariant = Color(0xFF2C2C2C),
+    // Diperterang dari 0xFF2C2C2C
+    surfaceVariant = Color(0xFF333333),
     onSurfaceVariant = White,
+
     inversePrimary = GreenPrimary,
 )
 
@@ -71,16 +76,11 @@ fun SupabaseAuthComposeTheme(
         LightColorScheme
     }
 
-    // ── BLOK KODE UNTUK MENGUBAH WARNA STATUS BAR (JAM, BATERAI) ──
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-
-            // Ubah warna latar status bar agar sama dengan warna background layar
             window.statusBarColor = colorScheme.background.toArgb()
-
-            // Jika darkTheme false (Light Mode), jadikan teks/ikon status bar menjadi gelap (hitam)
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

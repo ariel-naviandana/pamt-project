@@ -2,7 +2,7 @@ package com.example.pos.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan // Pastikan ini ter-import
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
@@ -30,23 +30,23 @@ fun DashboardScreen(
 ) {
     val role = profile?.role ?: "cashier"
 
-    // PEROMBAKAN UTAMA: Jadikan LazyVerticalGrid sebagai root (akar) layar.
-    // Ini memastikan SELURUH isi halaman bisa di-scroll saat landscape.
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(20.dp), // Padding dipindah ke sini
+        contentPadding = PaddingValues(20.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize()
     ) {
 
-        // ── HEADER: Ucapan Selamat Datang ──
-        // Menggunakan span agar card ini memakan lebar penuh (2 kolom grid)
         item(span = { GridItemSpan(maxLineSpan) }) {
-            // Tiru gaya KasItemCard: Menggunakan Card biasa dengan elevation 2.dp
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                // ── MENGGUNAKAN WARNA TEMA UNTUK CARD ADMIN ──
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp)
@@ -63,7 +63,6 @@ fun DashboardScreen(
             }
         }
 
-        // ── JUDUL MENU ──
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -74,8 +73,6 @@ fun DashboardScreen(
             }
         }
 
-        // ── ITEM MENU ──
-        // Item di bawah ini akan otomatis dibagi menjadi 2 kolom
         item {
             DashboardMenuCard(
                 title = "Produk",
