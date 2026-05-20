@@ -107,13 +107,5 @@ fun DashboardScreen(
                 onClick = onNavigateToPenjualan
             )
         }
-
-        item {
-            DashboardMenuCard(
-                title = "Laporan Laba Rugi",
-                icon = Icons.Default.Analytics,
-                onClick = onNavigateToLaporan
-            )
-        }
     }
 }
