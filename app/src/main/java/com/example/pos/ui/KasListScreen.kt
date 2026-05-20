@@ -51,9 +51,12 @@ fun KasListScreen(
             }
         }
     ) { paddingValues ->
+        // Pastikan modifier padding bawaan Scaffold digunakan agar UI tidak tertutup Navigation Bar/Status Bar
         Box(modifier = Modifier
-            .fillMaxSize()) {
-            
+            .fillMaxSize()
+            .padding(paddingValues) // <-- Tambahkan ini agar aman
+        ) {
+
             if (listState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (listState.error != null) {
@@ -86,6 +89,7 @@ fun KasListScreen(
                     items(listState.kasList) { kas ->
                         KasItemCard(
                             kas = kas,
+                            isAdmin = isAdmin, // <-- TERUSKAN VARIABEL ISADMIN KE SINI
                             onClick = {
                                 if (isAdmin) {
                                     navController.navigate(Screen.KasForm.createEditRoute(kas.id))
@@ -103,6 +107,7 @@ fun KasListScreen(
 @Composable
 fun KasItemCard(
     kas: Kas,
+    isAdmin: Boolean, // <-- TAMBAHKAN PARAMETER INI
     onClick: () -> Unit
 ) {
     val isNonaktif = kas.status == "nonaktif"
@@ -145,8 +150,10 @@ fun KasItemCard(
                 style = MaterialTheme.typography.labelMedium,
                 color = Color.Gray
             )
+
+            // <-- LOGIKA PENYENSORAN SALDO DI SINI
             Text(
-                text = "Rp ${kas.saldo ?: 0}",
+                text = if (isAdmin) "Rp ${kas.saldo ?: 0}" else "Rp ••••••••",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (isNonaktif) Color.Gray else MaterialTheme.colorScheme.primary
