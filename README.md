@@ -16,6 +16,7 @@ Dengan dukungan sistem backend berbasis cloud (Supabase), MyKasir memastikan sin
 *   **Manajemen Kas:** Pengaturan beberapa akun kas, pemantauan saldo real-time, dan fitur penyesuaian saldo (debit/kredit).
 *   **Manajemen Pengeluaran:** Pencatatan biaya operasional dengan alur persetujuan (draft/disetujui) dan integrasi saldo kas.
 *   **Manajemen Pelanggan:** Data pelanggan untuk mempermudah identifikasi transaksi di masa mendatang.
+*   **Laporan Laba Rugi:** Analisis keuangan berkala yang menghitung total pendapatan penjualan dikurangi beban pengeluaran operasional untuk memantau profitabilitas toko.
 *   **Role-Based Access Control (RBAC):** Pembatasan hak akses fitur sensitif (seperti edit harga atau kelola kas) hanya untuk akun Admin.
 
 ## Tech Stack & Libraries
