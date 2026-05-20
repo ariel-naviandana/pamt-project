@@ -220,6 +220,7 @@ fun MainScreen(
                 composable(BottomNavItem.Pelanggan.route) {
                     val pelangganViewModel: PelangganViewModel = viewModel()
                     PelangganListScreen(
+                        navController = bottomNavController,
                         viewModel = pelangganViewModel,
                         onAddPelanggan = { bottomNavController.navigate(Screen.PelangganForm.createRoute()) },
                         onEditPelanggan = { pelanggan ->
