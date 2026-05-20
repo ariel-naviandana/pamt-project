@@ -1,85 +1,64 @@
 package com.example.pos.ui.theme
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-
-    // Primary
     primary = GreenPrimary,
     onPrimary = White,
-
-    // Primary Container
     primaryContainer = GreenContainer,
     onPrimaryContainer = GreenDark,
-
-    // Secondary
     secondary = GreenPrimary,
     onSecondary = White,
-
     secondaryContainer = GreenContainer,
     onSecondaryContainer = GreenDark,
-
-    // Tertiary
     tertiary = GreenPrimary,
     onTertiary = White,
-
     tertiaryContainer = GreenContainer,
     onTertiaryContainer = GreenDark,
-
-    // Background
     background = BackgroundLight,
     onBackground = Color.Black,
-
-    // Surface
     surface = White,
     onSurface = Color.Black,
-
     surfaceVariant = Color(0xFFE8F5E9),
     onSurfaceVariant = GreenDark,
-
-    // Error
     error = Color(0xFFB3261E),
     onError = White,
-
-    // Outline
     outline = Color(0xFFB7CBB2),
-
-    // NAVBAR/FAB
     inversePrimary = GreenPrimary
 )
 
 private val DarkColorScheme = darkColorScheme(
-
     primary = GreenPrimary,
     onPrimary = White,
-
     primaryContainer = GreenDark,
     onPrimaryContainer = White,
-
     secondary = GreenPrimary,
     onSecondary = White,
-
     secondaryContainer = GreenDark,
     onSecondaryContainer = White,
-
     tertiary = GreenPrimary,
     onTertiary = White,
-
     tertiaryContainer = GreenDark,
     onTertiaryContainer = White,
-
     background = Color(0xFF121212),
     onBackground = White,
 
-    surface = Color(0xFF131313),
+    // ── PERUBAHAN KONTRAS DARK MODE ──
+    // Diperterang dari 0xFF131313 agar Card lebih terlihat batasnya
+    surface = Color(0xFF1E1E1E),
     onSurface = White,
-
-    surfaceVariant = Color(0xFF2C2C2C),
+    // Diperterang dari 0xFF2C2C2C
+    surfaceVariant = Color(0xFF333333),
     onSurfaceVariant = White,
 
     inversePrimary = GreenPrimary,
@@ -91,13 +70,20 @@ fun SupabaseAuthComposeTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val colorScheme = if (darkTheme) {
+        DarkColorScheme
+    } else {
+        LightColorScheme
+    }
 
-    val colorScheme =
-        if (darkTheme) {
-            DarkColorScheme
-        } else {
-            LightColorScheme
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,

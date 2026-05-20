@@ -19,6 +19,8 @@ import com.example.pos.model.Kas
 import com.example.pos.navigation.Screen
 import com.example.pos.ui.theme.ActiveStatusBg
 import com.example.pos.ui.theme.ActiveStatusText
+import com.example.pos.ui.theme.InactiveStatusBg
+import com.example.pos.ui.theme.InactiveStatusText
 import com.example.pos.viewmodel.KasViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,13 +127,13 @@ fun KasItemCard(
 
                 Surface(
                     shape = MaterialTheme.shapes.small,
-                    color = if (isNonaktif) MaterialTheme.colorScheme.errorContainer else ActiveStatusBg
+                    color = if (isNonaktif) InactiveStatusBg else ActiveStatusBg
                 ) {
                     Text(
                         text = kas.status.uppercase(),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isNonaktif) MaterialTheme.colorScheme.onErrorContainer else ActiveStatusText
+                        color = if (isNonaktif) InactiveStatusText else ActiveStatusText
                     )
                 }
             }

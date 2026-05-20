@@ -18,6 +18,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.pos.model.Produk
 import com.example.pos.navigation.Screen
+import com.example.pos.ui.theme.ActiveStatusBg
+import com.example.pos.ui.theme.ActiveStatusText
+import com.example.pos.ui.theme.InactiveStatusBg
+import com.example.pos.ui.theme.InactiveStatusText
 import com.example.pos.viewmodel.ProdukViewModel
 import java.text.NumberFormat
 import java.util.Locale
@@ -51,7 +55,7 @@ fun ProdukListScreen(
     ) { padding ->
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize().padding(padding)
         ) {
             when {
                 listState.isLoading -> {
@@ -160,18 +164,14 @@ private fun ProdukCard(
             Surface(
                 shape = MaterialTheme.shapes.small,
                 color = if (produk.status == "aktif")
-                    MaterialTheme.colorScheme.primaryContainer
-                else
-                    MaterialTheme.colorScheme.errorContainer
+                    ActiveStatusBg else InactiveStatusBg
             ) {
                 Text(
-                    text = produk.status,
+                    text = produk.status.uppercase(),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (produk.status == "aktif")
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    else
-                        MaterialTheme.colorScheme.onErrorContainer
+                        ActiveStatusText else InactiveStatusText
                 )
             }
         }
