@@ -1,8 +1,11 @@
 package com.example.pos.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,12 +29,13 @@ fun MainScreen(
     onLogoutClick: () -> Unit
 ) {
     val bottomNavController = rememberNavController()
-
     val role = userProfile?.role ?: "cashier"
-    val items = listOf(
+
+    // FIX: Menggunakan listOfNotNull agar item null otomatis dibuang dan list tidak berstatus Nullable
+    val items = listOfNotNull(
         BottomNavItem.Home,
         BottomNavItem.Kas,
-        BottomNavItem.Laporan,
+        if (role == "admin") BottomNavItem.Laporan else null,
         BottomNavItem.Profile
     )
 
@@ -42,7 +46,6 @@ fun MainScreen(
         if (currentRoute == route) return
 
         bottomNavController.navigate(route) {
-            // Menggunakan findStartDestination().id sesuai standar resmi Google
             popUpTo(bottomNavController.graph.findStartDestination().id) {
                 saveState = true
             }
@@ -59,7 +62,7 @@ fun MainScreen(
         currentRoute?.startsWith("kas") == true -> "Manajemen Kas"
         currentRoute == BottomNavItem.Profile.route -> "Profile"
         currentRoute?.startsWith("penjualan") == true -> "Manajemen Penjualan"
-        currentRoute ?.startsWith("laporan") == true -> "Laporan Laba Rugi"
+        currentRoute?.startsWith("laporan") == true -> "Laporan Laba Rugi"
         else -> "MyKasir Dashboard"
     }
 
@@ -91,10 +94,8 @@ fun MainScreen(
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         ),
-                        // Cukup panggil fungsi yang sudah distandarisasi
                         onClick = { navigateToTab(item.route) },
-                        icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
-//                        label = { Text(item.title) }
+                        icon = { Icon(imageVector = item.icon, contentDescription = item.title) }
                     )
                 }
             }
@@ -116,7 +117,7 @@ fun MainScreen(
                         onNavigateToPengeluaran = { navigateToTab(BottomNavItem.Pengeluaran.route) },
                         onNavigateToPelanggan = { navigateToTab(BottomNavItem.Pelanggan.route) },
                         onNavigateToPenjualan = { navigateToTab(BottomNavItem.Penjualan.route) },
-                        onNavigateToLaporan = { navigateToTab(BottomNavItem.Laporan.route) } // Rute Baru
+                        onNavigateToLaporan = { navigateToTab(BottomNavItem.Laporan.route) }
                     )
                 }
 
@@ -151,7 +152,7 @@ fun MainScreen(
                     )
                 }
 
-                // ── KAS ──────────────────────────────────────────────────────────
+                // ── KAS ──
                 composable(Screen.KasList.route) {
                     val kasViewModel: KasViewModel = viewModel()
                     KasListScreen(
@@ -226,9 +227,7 @@ fun MainScreen(
                         onAddPelanggan = { bottomNavController.navigate(Screen.PelangganForm.createRoute()) },
                         onEditPelanggan = { pelanggan ->
                             bottomNavController.navigate(
-                                Screen.PelangganForm.createEditRoute(
-                                    pelanggan.id
-                                )
+                                Screen.PelangganForm.createEditRoute(pelanggan.id)
                             )
                         }
                     )
@@ -271,26 +270,28 @@ fun MainScreen(
                 composable(Screen.PenjualanForm.route) {
                     PenjualanFormScreen(navController = bottomNavController)
                 }
+
                 // ── LAPORAN LABA RUGI ──
                 composable(BottomNavItem.Laporan.route) {
-                    val laporanViewModel: com.example.pos.viewmodel.LaporanViewModel = viewModel()
-                    val laporanUiState by laporanViewModel.uiState.collectAsStateWithLifecycle()
+                    if (role == "admin") {
+                        val laporanViewModel: com.example.pos.viewmodel.LaporanViewModel = viewModel()
+                        val uiState by laporanViewModel.uiState.collectAsState()
+                        val listFilter by laporanViewModel.listFilter.collectAsState()
+                        val filterTerpilih by laporanViewModel.filterTerpilih.collectAsState()
 
-                    val uiState by laporanViewModel.uiState.collectAsState()
-                    val listFilter by laporanViewModel.listFilter.collectAsState()
-                    val filterTerpilih by laporanViewModel.filterTerpilih.collectAsState()
-
-                    LaporanScreen(
-                        uiState = uiState,
-                        listFilter = listFilter,
-                        filterTerpilih = filterTerpilih,
-                        onFilterSelected = { filter ->
-                            laporanViewModel.loadLaporan(filter)
-                        },
-                        onRefreshClick = {
-                            laporanViewModel.loadLaporan(filterTerpilih)
+                        LaporanScreen(
+                            uiState = uiState,
+                            listFilter = listFilter,
+                            filterTerpilih = filterTerpilih,
+                            onFilterSelected = { filter -> laporanViewModel.loadLaporan(filter) },
+                            onRefreshClick = { laporanViewModel.loadLaporan(filterTerpilih) }
+                        )
+                    } else {
+                        // Proteksi berlapis: Jika kasir menembus tautan langsung, tampilkan kontainer kosong
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Akses Terbatasi", color = MaterialTheme.colorScheme.error)
                         }
-                    )
+                    }
                 }
             }
         }

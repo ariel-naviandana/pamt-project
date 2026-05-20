@@ -42,7 +42,6 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                // ── MENGGUNAKAN WARNA TEMA UNTUK CARD ADMIN ──
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -103,6 +102,17 @@ fun DashboardScreen(
                 icon = Icons.Default.ShoppingCart,
                 onClick = onNavigateToPenjualan
             )
+        }
+
+        // FIX: Hanya merender grid Laba Rugi jika user yang login adalah Admin
+        if (role == "admin") {
+            item {
+                DashboardMenuCard(
+                    title = "Laba Rugi",
+                    icon = Icons.Default.Analytics,
+                    onClick = onNavigateToLaporan
+                )
+            }
         }
     }
 }
