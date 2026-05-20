@@ -2,31 +2,31 @@
 
 MyKasir adalah aplikasi Point of Sales (POS) berbasis Android yang dirancang untuk membantu pengelolaan operasional bisnis ritel atau UMKM secara digital. Aplikasi ini memungkinkan pengguna untuk mengelola inventaris produk, memantau arus kas, mencatat pengeluaran, serta manajemen data pelanggan dengan antarmuka yang modern dan responsif.
 
-Dengan dukungan sistem backend berbasis cloud (Supabase), MyKasir memastikan sinkronisasi data terjadi secara real-time, memberikan keamanan data transaksi, serta mendukung pembagian peran (Role-Based Access Control) antara Admin dan Kasir untuk menjaga integritas operasional toko.
+Dengan dukungan sistem backend berbasis cloud (Supabase), MyKasir memastikan sinkronisasi data dari perangkat ke database cloud terjadi secara instan pada setiap transaksi, memberikan keamanan data, serta mendukung pembagian peran (Role-Based Access Control) antara Admin dan Kasir untuk menjaga integritas operasional toko.
 
 ## Informasi Dasar
-*   **Versi Minimum Android:** Android 12 (SDK 31)
-*   **Bahasa Pemrograman:** Kotlin
-*   **Framework UI:** Jetpack Compose
+* **Versi Minimum Android:** Android 12 (SDK 31)
+* **Bahasa Pemrograman:** Kotlin
+* **Framework UI:** Jetpack Compose
 
 ## Fitur Utama
-*   **Sistem Autentikasi:** Login dan Registrasi pengguna dengan pembagian peran Admin dan Kasir.
-*   **Dashboard Interaktif:** Ringkasan informasi profil dan akses cepat ke menu utama operasional.
-*   **Manajemen Produk:** Pengelolaan daftar produk, harga, satuan, serta pemantauan stok secara otomatis.
-*   **Manajemen Kas:** Pengaturan beberapa akun kas, pemantauan saldo real-time, dan fitur penyesuaian saldo (debit/kredit).
-*   **Manajemen Pengeluaran:** Pencatatan biaya operasional dengan alur persetujuan (draft/disetujui) dan integrasi saldo kas.
-*   **Manajemen Pelanggan:** Data pelanggan untuk mempermudah identifikasi transaksi di masa mendatang.
-*   **Laporan Laba Rugi:** Analisis keuangan berkala yang menghitung total pendapatan penjualan dikurangi beban pengeluaran operasional untuk memantau profitabilitas toko.
-*   **Role-Based Access Control (RBAC):** Pembatasan hak akses fitur sensitif (seperti edit harga atau kelola kas) hanya untuk akun Admin.
+* **Sistem Autentikasi:** Login dan Registrasi pengguna dengan pembagian peran Admin dan Kasir.
+* **Dashboard Interaktif:** Ringkasan informasi profil dan akses cepat ke menu utama operasional.
+* **Manajemen Produk:** Pengelolaan daftar produk, harga, satuan, serta pemantauan stok secara otomatis.
+* **Manajemen Kas:** Pengaturan beberapa akun kas, pemantauan saldo terintegrasi, dan fitur penyesuaian saldo (debit/kredit).
+* **Manajemen Pengeluaran:** Pencatatan biaya operasional dengan alur persetujuan (draft/disetujui) dan integrasi saldo kas.
+* **Laporan Laba Rugi:** Analisis keuangan berkala yang menghitung total pendapatan penjualan dikurangi beban pengeluaran operasional untuk memantau profitabilitas toko berdasarkan data transaksi terbaru.
+* **Manajemen Pelanggan:** Data pelanggan untuk mempermudah identifikasi transaksi di masa mendatang.
+* **Role-Based Access Control (RBAC):** Pembatasan hak akses fitur sensitif (seperti edit harga, kelola kas, atau melihat laporan keuangan) hanya untuk akun Admin.
 
 ## Tech Stack & Libraries
-*   **Jetpack Compose:** Framework modern untuk membangun antarmuka pengguna Android yang reaktif.
-*   **Material 3:** Standar desain terbaru dari Google untuk estetika UI yang bersih dan konsisten.
-*   **Supabase (Auth & Postgrest):** Solusi backend-as-a-service untuk manajemen user dan database real-time.
-*   **Ktor Client:** Library network yang ringan dan efisien untuk komunikasi API.
-*   **Navigation Compose:** Navigasi antar layar yang terintegrasi dengan struktur Compose.
-*   **ViewModel & StateFlow:** Arsitektur state management untuk memastikan UI selalu sinkron dengan data terbaru.
-*   **Kotlin Serialization:** Konversi data JSON yang aman dan cepat.
+* **Jetpack Compose:** Framework modern untuk membangun antarmuka pengguna Android yang reaktif.
+* **Material 3:** Standar desain terbaru dari Google untuk estetika UI yang bersih dan konsisten.
+* **Supabase (Auth & Postgrest):** Solusi backend-as-a-service untuk manajemen user dan database PostgreSQL berbasis cloud.
+* **Ktor Client:** Library network yang ringan dan efisien untuk komunikasi API.
+* **Navigation Compose:** Navigasi antar layar yang terintegrasi dengan struktur Compose.
+* **ViewModel & StateFlow:** Arsitektur state management untuk memastikan UI selalu sinkron dengan data terbaru setelah proses memuat data (*data fetching*).
+* **Kotlin Serialization:** Konversi data JSON yang aman dan cepat.
 
 ## Prasyarat & Cara Menjalankan
 ### Prasyarat
