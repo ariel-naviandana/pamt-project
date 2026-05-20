@@ -103,16 +103,5 @@ fun DashboardScreen(
                 onClick = onNavigateToPenjualan
             )
         }
-
-        // FIX: Hanya merender grid Laba Rugi jika user yang login adalah Admin
-        if (role == "admin") {
-            item {
-                DashboardMenuCard(
-                    title = "Laba Rugi",
-                    icon = Icons.Default.Analytics,
-                    onClick = onNavigateToLaporan
-                )
-            }
-        }
     }
 }
