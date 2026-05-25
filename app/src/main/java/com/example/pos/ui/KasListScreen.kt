@@ -52,9 +52,7 @@ fun KasListScreen(
         }
     ) { paddingValues ->
         Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-        ) {
+            .fillMaxSize()) {
 
             if (listState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -88,7 +86,6 @@ fun KasListScreen(
                     items(listState.kasList) { kas ->
                         KasItemCard(
                             kas = kas,
-                            isAdmin = isAdmin,
                             onClick = {
                                 if (isAdmin) {
                                     navController.navigate(Screen.KasForm.createEditRoute(kas.id))
@@ -106,7 +103,6 @@ fun KasListScreen(
 @Composable
 fun KasItemCard(
     kas: Kas,
-    isAdmin: Boolean,
     onClick: () -> Unit
 ) {
     val isNonaktif = kas.status == "nonaktif"
@@ -142,22 +138,19 @@ fun KasItemCard(
                 }
             }
 
-            // ── PERUBAHAN UTAMA: Sembunyikan seluruh section Saldo Akhir dari Kasir ──
-            if (isAdmin) {
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Saldo Akhir",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray
-                )
-                Text(
-                    text = "Rp ${kas.saldo ?: 0}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (isNonaktif) Color.Gray else MaterialTheme.colorScheme.primary
-                )
-            }
+            Text(
+                text = "Saldo Akhir",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.Gray
+            )
+            Text(
+                text = "Rp ${kas.saldo ?: 0}",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (isNonaktif) Color.Gray else MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
